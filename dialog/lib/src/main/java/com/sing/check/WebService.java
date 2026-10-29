@@ -65,9 +65,10 @@ public class WebService extends AsyncTask<String, Void, String> {
 
     /** Shared decision used by onPostExecute (and exercised by tests). */
     public static boolean shouldShow(boolean dismissable) {
-        // forced dialog (no "رد"): show only until the user joins this session
-        if (!dismissable && joined) return false;
-        return true;
+        // Show on every launch until the user taps "join" this session.
+        // Tapping "رد" (dismiss) does NOT set joined, so the dialog keeps
+        // appearing on later launches until the user actually joins.
+        return !joined;
     }
 
     @Override

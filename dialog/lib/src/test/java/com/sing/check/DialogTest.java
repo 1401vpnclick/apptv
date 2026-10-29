@@ -60,14 +60,32 @@ public class DialogTest {
     }
 
     @Test
-    public void showOnce_logic_forForced() {
-        // forced + not yet joined -> show
+    public void showOnce_afterJoin_bothModes() {
         assertTrue(WebService.shouldShow(false));
-        WebService.joined = true;
-        // forced + already joined -> skip
-        assertFalse(WebService.shouldShow(false));
-        // optional always shows regardless of joined
         assertTrue(WebService.shouldShow(true));
+        WebService.joined = true; // user joined this session
+        assertFalse(WebService.shouldShow(false));
+        assertFalse("optional dialog also stops this session after joining",
+                WebService.shouldShow(true));
+    }
+
+    @Test
+    public void tappingJoin_dismissesDialog_optionalMode() {
+        CustomDialogClass d = new CustomDialogClass(activity(), "t", "m",
+                true, "رد", "عضویت", "https://t.me/x");
+        d.show();
+        assertTrue(d.isShowing());
+        d.positiveButton.performClick();
+        assertFalse("dialog must close after tapping join (optional mode)", d.isShowing());
+    }
+
+    @Test
+    public void tappingDismiss_closesDialog() {
+        CustomDialogClass d = new CustomDialogClass(activity(), "t", "m",
+                true, "رد", "عضویت", "https://t.me/x");
+        d.show();
+        d.negativeButton.performClick();
+        assertFalse("dialog must close after tapping رد", d.isShowing());
     }
 
     @Test

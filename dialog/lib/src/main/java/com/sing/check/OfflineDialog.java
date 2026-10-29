@@ -33,10 +33,10 @@ import java.net.URLEncoder;
  */
 public class OfflineDialog extends Dialog {
 
-    // ======= EDIT THESE TWO =======
-    static final String TG_LINK = "tg://resolve?domain=Vpn_irany";               // ← لینک/آیدی تلگرام
-    static final String COUNTER_URL = "https://offline-counter.example.workers.dev"; // ← آدرس Worker (بدون / در آخر)
-    // ==============================
+    // ======= EDIT THESE TWO (non-final so each lives as ONE editable string in the dex) =======
+    static String TG_LINK = "tg://resolve?domain=Vpn_irany";                // ← لینک/آیدی تلگرام
+    static String COUNTER_URL = "https://offline-counter.example.workers.dev"; // ← آدرس Worker (بدون / در آخر)
+    // ==========================================================================================
 
     // fixed text (from the sample dialog)
     static final String TITLE = "👤 کاربر گرامی";

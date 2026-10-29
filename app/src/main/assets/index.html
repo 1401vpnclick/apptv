@@ -1,0 +1,537 @@
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>پنل دیالوگ VPN Click</title>
+<style>
+  /* Layout: a login gate first, then form + live preview.
+     Dark-first control panel — deep slate surfaces, telegram-blue accent, green "ok" status. */
+  :root{
+    --bg:#0e141c; --surface:#17212e; --surface-2:#1e2b3a; --line:#2a3a4d;
+    --fg:#e8eef5; --muted:#8ba0b6; --accent:#2ea6ff; --accent-ink:#04223b;
+    --ok:#32c871; --warn:#ffb23e; --danger:#ff5d5d;
+    --radius:14px; --gap:16px;
+    --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+    --ui:"Vazirmatn","Segoe UI",Tahoma,system-ui,sans-serif;
+    color-scheme:dark;
+  }
+  @media (prefers-color-scheme: light){
+    :root:not([data-theme="dark"]){
+      --bg:#eef3f9; --surface:#ffffff; --surface-2:#f3f7fc; --line:#dde6f0;
+      --fg:#13202e; --muted:#5c7289; --accent:#1b8fe0; --accent-ink:#ffffff;
+      --ok:#17a357; --warn:#c77700; --danger:#d63b3b;
+      color-scheme:light;
+    }
+  }
+  :root[data-theme="light"]{
+    --bg:#eef3f9; --surface:#ffffff; --surface-2:#f3f7fc; --line:#dde6f0;
+    --fg:#13202e; --muted:#5c7289; --accent:#1b8fe0; --accent-ink:#ffffff;
+    --ok:#17a357; --warn:#c77700; --danger:#d63b3b;
+    color-scheme:light;
+  }
+
+  *{box-sizing:border-box}
+  body{background:var(--bg);color:var(--fg);font-family:var(--ui);direction:rtl;line-height:1.7}
+  h1,h2,h3{margin:0;text-wrap:balance;font-weight:700}
+  a{color:var(--accent)}
+  button{font-family:var(--ui);cursor:pointer}
+  input,select,textarea{font-family:var(--ui)}
+
+  .wrap{max-width:1120px;margin:0 auto;
+    padding-left:max(16px,env(safe-area-inset-left,0px));
+    padding-right:max(16px,env(safe-area-inset-right,0px));
+    padding-block:22px 48px}
+
+  /* ============ LOGIN GATE ============ */
+  #gate{min-height:100%;display:flex;align-items:center;justify-content:center;
+    padding-left:max(18px,env(safe-area-inset-left,0px));
+    padding-right:max(18px,env(safe-area-inset-right,0px));padding-block:40px}
+  .gate-card{width:100%;max-width:400px;background:var(--surface);border:1px solid var(--line);
+    border-radius:18px;padding:26px 22px;box-shadow:0 24px 60px -24px rgba(0,0,0,.6)}
+  .gate-logo{width:62px;height:62px;border-radius:16px;margin:0 auto 14px;
+    background:linear-gradient(145deg,var(--accent),#1577c7);display:grid;place-items:center;
+    color:#fff;font-weight:800;font-size:25px;box-shadow:0 8px 22px -6px color-mix(in srgb,var(--accent) 60%,transparent)}
+  .gate-card h1{font-size:1.25rem;text-align:center;letter-spacing:-.01em}
+  .gate-card .tag{text-align:center;color:var(--muted);font-size:.84rem;margin:5px 0 20px}
+  .gate-sec{display:flex;align-items:flex-start;gap:8px;background:var(--surface-2);border:1px solid var(--line);
+    border-radius:10px;padding:10px 12px;font-size:.75rem;color:var(--muted);line-height:1.8;margin-top:4px}
+  .gate-sec b{color:var(--ok)}
+
+  label{display:block;font-size:.8rem;color:var(--muted);margin:0 0 6px}
+  .field{margin-bottom:13px}
+  .field:last-child{margin-bottom:0}
+  input[type=text],input[type=password],select,textarea{
+    width:100%;background:var(--surface-2);border:1px solid var(--line);color:var(--fg);
+    border-radius:10px;padding:11px 12px;font-size:.9rem;min-width:0}
+  textarea{resize:vertical;min-height:72px;line-height:1.75}
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:1px}
+  input::placeholder,textarea::placeholder{color:color-mix(in srgb,var(--muted) 75%,transparent)}
+
+  /* ============ APP ============ */
+  header.top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:6px}
+  .brand{display:flex;align-items:center;gap:11px;min-width:0}
+  .logo{width:40px;height:40px;border-radius:11px;flex:none;
+    background:linear-gradient(145deg,var(--accent),#1577c7);
+    display:grid;place-items:center;color:#fff;font-weight:800;font-size:18px;
+    box-shadow:0 4px 14px -4px color-mix(in srgb,var(--accent) 60%,transparent)}
+  .brand h1{font-size:1.22rem;letter-spacing:-.01em}
+  .brand p{margin:1px 0 0;color:var(--muted);font-size:.8rem}
+  .brand p .who{color:var(--accent);font-weight:700}
+  .spacer{flex:1}
+  .topbtn{background:var(--surface);border:1px solid var(--line);color:var(--muted);
+    height:38px;padding:0 12px;border-radius:10px;font-size:.8rem;font-weight:600;display:inline-flex;align-items:center;gap:6px}
+  .topbtn:hover{color:var(--accent);border-color:var(--accent)}
+  .theme-btn{width:38px;padding:0;justify-content:center;font-size:17px}
+
+  .grid{display:grid;grid-template-columns:1fr;gap:var(--gap);margin-top:18px}
+  @media(min-width:860px){.grid{grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);align-items:start}}
+
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px}
+  .card + .card{margin-top:var(--gap)}
+  .card h2{font-size:.96rem;display:flex;align-items:center;gap:8px;margin-bottom:2px}
+  .card h2 .ic{color:var(--accent)}
+  .card .sub{color:var(--muted);font-size:.8rem;margin:0 0 14px}
+  .sticky-col{position:sticky;top:max(12px,env(safe-area-inset-top,0px))}
+
+  .row{display:flex;gap:11px;flex-wrap:wrap}
+  .row > *{flex:1;min-width:130px}
+  .hint{font-size:.72rem;color:var(--muted);margin-top:5px}
+  .hint code{font-family:var(--mono);background:var(--surface-2);padding:1px 5px;border-radius:5px;font-size:.92em;direction:ltr;display:inline-block}
+
+  .toggle{display:flex;align-items:center;justify-content:space-between;gap:12px;
+    background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:11px 13px}
+  .toggle .lbl{font-size:.86rem;color:var(--fg)}
+  .toggle .lbl small{display:block;color:var(--muted);font-size:.74rem;margin-top:2px}
+  .sw{position:relative;width:46px;height:26px;flex:none}
+  .sw input{position:absolute;opacity:0;width:100%;height:100%;margin:0;cursor:pointer}
+  .sw .track{position:absolute;inset:0;background:var(--line);border-radius:30px;transition:.18s}
+  .sw .knob{position:absolute;top:3px;right:3px;width:20px;height:20px;background:#fff;border-radius:50%;transition:.18s}
+  .sw input:checked + .track{background:var(--accent)}
+  .sw input:checked + .track + .knob{right:23px}
+
+  .btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:4px}
+  .btn{border:1px solid var(--line);background:var(--surface-2);color:var(--fg);
+    border-radius:10px;padding:11px 15px;font-size:.86rem;font-weight:600;display:inline-flex;
+    align-items:center;gap:7px;transition:.15s;flex:1;justify-content:center;min-width:120px}
+  .btn:hover{border-color:var(--accent)}
+  .btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+  .btn.primary:hover{filter:brightness(1.07)}
+  .btn.block{width:100%;flex:none}
+  .btn.ghost{background:transparent}
+
+  pre.json{font-family:var(--mono);direction:ltr;background:var(--surface-2);border:1px solid var(--line);
+    border-radius:10px;padding:13px;font-size:.8rem;line-height:1.7;overflow-x:auto;white-space:pre;margin:0;color:var(--fg)}
+  .tok-key{color:var(--accent)} .tok-str{color:var(--ok)} .tok-bool{color:var(--warn)}
+  .urlbox{display:flex;align-items:center;gap:8px;background:var(--surface-2);border:1px solid var(--line);
+    border-radius:10px;padding:8px 10px;margin-top:9px}
+  .urlbox code{font-family:var(--mono);direction:ltr;font-size:.76rem;color:var(--fg);overflow-x:auto;
+    white-space:nowrap;flex:1;min-width:0}
+  .mini{border:1px solid var(--line);background:var(--surface);color:var(--muted);border-radius:8px;
+    padding:6px 10px;font-size:.76rem;font-weight:600;flex:none}
+  .mini:hover{color:var(--accent);border-color:var(--accent)}
+
+  .phone{background:var(--surface-2);border:1px solid var(--line);border-radius:16px;padding:20px 16px;
+    display:grid;place-items:center;margin-top:4px}
+  .dlg{width:100%;max-width:300px;background:#fff;color:#1a1a1a;border-radius:14px;padding:20px 18px 16px;
+    box-shadow:0 18px 40px -12px rgba(0,0,0,.5);direction:rtl;text-align:center}
+  .dlg .dtitle{font-weight:800;font-size:1.02rem;margin-bottom:9px;color:#111}
+  .dlg .dmsg{font-size:.86rem;line-height:1.85;color:#333;margin-bottom:16px}
+  .dlg .dbtns{display:flex;gap:9px}
+  .dlg .db{flex:1;border:none;border-radius:9px;padding:10px;font-size:.84rem;font-weight:700;font-family:var(--ui)}
+  .dlg .db.ok{background:var(--accent);color:#fff}
+  .dlg .db.no{background:#eceff3;color:#444}
+
+  .app-item{display:flex;align-items:center;gap:10px;background:var(--surface-2);border:1px solid var(--line);
+    border-radius:11px;padding:11px 13px;margin-bottom:9px}
+  .app-item .nm{font-weight:700;font-size:.88rem;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .app-item .st{font-size:.68rem;padding:2px 8px;border-radius:20px;font-weight:700;flex:none}
+  .st.on{background:color-mix(in srgb,var(--ok) 20%,transparent);color:var(--ok)}
+  .st.off{background:color-mix(in srgb,var(--danger) 20%,transparent);color:var(--danger)}
+  .app-item .acts{display:flex;gap:6px;margin-inline-start:auto;flex:none}
+  .iconbtn{width:30px;height:30px;border-radius:8px;border:1px solid var(--line);background:var(--surface);
+    color:var(--muted);display:grid;place-items:center;font-size:14px}
+  .iconbtn:hover{color:var(--accent);border-color:var(--accent)}
+  .iconbtn.del:hover{color:var(--danger);border-color:var(--danger)}
+  .empty{color:var(--muted);font-size:.82rem;text-align:center;padding:22px 10px;line-height:1.9}
+
+  .toast{position:fixed;bottom:calc(18px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%) translateY(20px);
+    background:var(--fg);color:var(--bg);padding:11px 20px;border-radius:30px;font-size:.84rem;font-weight:700;
+    opacity:0;transition:.25s;z-index:50;pointer-events:none;box-shadow:0 8px 24px -8px rgba(0,0,0,.5)}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  .status-note{font-size:.78rem;margin-top:10px;padding:9px 12px;border-radius:9px;line-height:1.7;display:none}
+  .status-note.show{display:block}
+  .status-note.ok{background:color-mix(in srgb,var(--ok) 15%,transparent);color:var(--ok)}
+  .status-note.err{background:color-mix(in srgb,var(--danger) 15%,transparent);color:var(--danger)}
+  .status-note.info{background:color-mix(in srgb,var(--accent) 15%,transparent);color:var(--accent)}
+
+  details.help{margin-top:var(--gap);background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:4px 18px}
+  details.help summary{cursor:pointer;font-weight:700;font-size:.9rem;padding:12px 0;list-style:none;display:flex;align-items:center;gap:8px}
+  details.help summary::-webkit-details-marker{display:none}
+  details.help summary::before{content:"+";color:var(--accent);font-weight:800;font-size:1.1rem}
+  details.help[open] summary::before{content:"–"}
+  details.help .body{padding:0 0 14px;font-size:.85rem;color:var(--muted);line-height:1.9}
+  details.help code{font-family:var(--mono);direction:ltr;background:var(--surface-2);padding:2px 6px;border-radius:6px;font-size:.86em;color:var(--fg);display:inline-block;word-break:break-all}
+  details.help pre{font-family:var(--mono);direction:ltr;background:var(--surface-2);border:1px solid var(--line);
+    border-radius:9px;padding:12px;font-size:.78rem;overflow-x:auto;color:var(--fg);line-height:1.8}
+  .sep{height:1px;background:var(--line);margin:15px 0}
+</style>
+
+<!-- ============ LOGIN GATE ============ -->
+<div id="gate">
+  <div class="gate-card">
+    <div class="gate-logo">VC</div>
+    <h1>ورود به پنل</h1>
+    <p class="tag">یک‌بار وارد کن؛ روی همین دستگاه ذخیره می‌ماند.</p>
+
+    <div class="field"><label>نام کاربری گیت‌هاب</label>
+      <input type="text" id="g_owner" placeholder="1401vpnclick" autocomplete="off"></div>
+    <div class="field"><label>نام ریپازیتوری</label>
+      <input type="text" id="g_repo" placeholder="pvtest1" autocomplete="off"></div>
+    <div class="field"><label>توکن گیت‌هاب</label>
+      <input type="password" id="g_token" placeholder="github_pat_..." autocomplete="off"></div>
+
+    <button class="btn primary block" id="gateEnter" style="margin-top:6px">ورود و ذخیره</button>
+    <div class="gate-sec">🔒 <span><b>امن:</b> توکن فقط در حافظهٔ همین دستگاه ذخیره می‌شود و هیچ‌جای دیگری ارسال نمی‌شود. هر وقت خواستی می‌توانی از گیت‌هاب باطلش کنی.</span></div>
+  </div>
+</div>
+
+<!-- ============ APP ============ -->
+<div class="wrap" id="app" hidden>
+  <header class="top">
+    <div class="brand">
+      <div class="logo">VC</div>
+      <div>
+        <h1>پنل دیالوگ VPN Click</h1>
+        <p>متصل به <span class="who" id="whoami">—</span></p>
+      </div>
+    </div>
+    <div class="spacer"></div>
+    <button class="topbtn" id="logoutBtn" title="تعویض حساب">⇋ خروج</button>
+    <button class="topbtn theme-btn" id="themeBtn" title="تغییر تم" aria-label="تغییر تم">◐</button>
+  </header>
+
+  <div class="grid">
+    <!-- LEFT: form -->
+    <div>
+      <div class="card">
+        <h2><span class="ic">＋</span> افزودن / ویرایش برنامه</h2>
+        <p class="sub">اسم برنامه را بنویس؛ مسیر فایل و لینک خودکار ساخته می‌شود.</p>
+
+        <div class="field">
+          <label>نام برنامه</label>
+          <input type="text" id="app_name" placeholder="مثلاً CloverVPN 1.2.3">
+          <p class="hint">نام فایل: <code id="filename_preview">app.txt</code></p>
+        </div>
+
+        <div class="sep"></div>
+
+        <div class="field"><label>عنوان دیالوگ (title)</label>
+          <input type="text" id="f_title" placeholder="کاربر گرامی"></div>
+        <div class="field"><label>متن پیام (message)</label>
+          <textarea id="f_message" placeholder="جهت استفاده از این Vpn در کانال تلگرام ما عضو شوید ♥️"></textarea></div>
+
+        <div class="row">
+          <div class="field"><label>متن دکمه عضویت (okTxt)</label>
+            <input type="text" id="f_okTxt" placeholder="عضویت در تلگرام 🟢"></div>
+          <div class="field"><label>یوزرنیم کانال تلگرام</label>
+            <input type="text" id="f_tg" placeholder="Vpn_irany"></div>
+        </div>
+        <p class="hint">لینک دکمه: <code id="okurl_preview">tg://resolve?domain=Vpn_irany</code></p>
+
+        <div class="toggle" style="margin-bottom:13px">
+          <div class="lbl">لینک دلخواه به‌جای تلگرام
+            <small>اگر روشن باشد، از فیلد زیر استفاده می‌شود</small></div>
+          <label class="sw"><input type="checkbox" id="f_useRaw"><span class="track"></span><span class="knob"></span></label>
+        </div>
+        <div class="field" id="rawUrlField" hidden><label>لینک دلخواه دکمه (okUrl)</label>
+          <input type="text" id="f_okUrlRaw" placeholder="https://t.me/Vpn_irany"></div>
+
+        <div class="sep"></div>
+
+        <div class="toggle" style="margin-bottom:13px">
+          <div class="lbl">نمایش دکمه «رد / خیر»
+            <small>روشن = دکمه رد دیده می‌شود · خاموش = کاربر مجبور به عضویت است</small></div>
+          <label class="sw"><input type="checkbox" id="f_dismissable"><span class="track"></span><span class="knob"></span></label>
+        </div>
+        <div class="field" id="dismissTxtField" hidden><label>متن دکمه رد (dismissTxt)</label>
+          <input type="text" id="f_dismissTxt" placeholder="رد"></div>
+
+        <div class="toggle">
+          <div class="lbl">وضعیت دیالوگ (status)
+            <small>روشن = <code style="direction:ltr">ok</code> (نمایش داده شود) · خاموش = <code style="direction:ltr">off</code></small></div>
+          <label class="sw"><input type="checkbox" id="f_status" checked><span class="track"></span><span class="knob"></span></label>
+        </div>
+
+        <div class="sep"></div>
+        <div class="btns">
+          <button class="btn primary" id="btnPush">☁ ذخیره در گیت‌هاب</button>
+          <button class="btn" id="btnSaveLocal">💾 ذخیره در لیست</button>
+        </div>
+        <div class="btns" style="margin-top:0">
+          <button class="btn ghost" id="btnCopyTxt">📋 کپی محتوای فایل</button>
+          <button class="btn ghost" id="btnReset">✕ پاک‌کردن فرم</button>
+        </div>
+        <div class="status-note" id="pushNote"></div>
+      </div>
+
+      <div class="card">
+        <h2><span class="ic">⚙</span> اتصال گیت‌هاب</h2>
+        <p class="sub">در صورت نیاز ویرایش کن.</p>
+        <div class="row">
+          <div class="field"><label>یوزرنیم</label><input type="text" id="gh_owner"></div>
+          <div class="field"><label>ریپو</label><input type="text" id="gh_repo"></div>
+          <div class="field"><label>برنچ</label><input type="text" id="gh_branch" placeholder="main"></div>
+        </div>
+        <div class="field"><label>توکن</label><input type="password" id="gh_token" placeholder="github_pat_..."></div>
+      </div>
+    </div>
+
+    <!-- RIGHT: preview + list -->
+    <div class="sticky-col">
+      <div class="card">
+        <h2><span class="ic">◇</span> پیش‌نمایش زنده</h2>
+        <p class="sub">همین چیزی که در فایل گیت‌هاب ذخیره می‌شود.</p>
+        <pre class="json" id="jsonOut"></pre>
+        <div class="urlbox">
+          <code id="rawLink">—</code>
+          <button class="mini" id="copyLink">کپی لینک</button>
+        </div>
+        <div class="btns" style="margin-top:11px">
+          <button class="btn ghost" id="copyJson">📋 کپی JSON</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2><span class="ic">▣</span> ظاهر دیالوگ</h2>
+        <div class="phone">
+          <div class="dlg">
+            <div class="dtitle" id="pv_title">کاربر گرامی</div>
+            <div class="dmsg" id="pv_msg">متن پیام اینجا نمایش داده می‌شود.</div>
+            <div class="dbtns">
+              <button class="db ok" id="pv_ok">عضویت در تلگرام 🟢</button>
+              <button class="db no" id="pv_no">رد</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2><span class="ic">≣</span> برنامه‌های ذخیره‌شده</h2>
+        <p class="sub">روی ✎ بزن تا در فرم بارگذاری شود.</p>
+        <div id="appList"></div>
+      </div>
+    </div>
+  </div>
+
+  <details class="help">
+    <summary>راهنمای اتصال به برنامه (دو خط smali) + رفع باگ دکمه «رد»</summary>
+    <div class="body">
+      <p><b>۱) فراخوانی در MainActivity.</b> همان دو خطی که داری را در ابتدای متد <code>onCreate</code> قرار بده و دکس را مرج کن:</p>
+      <pre>invoke-static {p0}, Lcom/sing/check/WebService;->Heh(Landroid/app/Activity;)V
+
+invoke-static {p0}, Lcom/sing/check/simpl;->showDialog(Landroid/content/Context;)V</pre>
+      <p><b>۲) لینک در متد Heh.</b> لینک خام هر برنامه را که این پنل می‌سازد، داخل <code>WebService.Heh</code> (آدرس <code>mUrl</code>) بگذار.</p>
+      <div class="sep"></div>
+      <p><b>۳) باگ دکمه «رد» که با <code>dismissable:true</code> هم نمایش داده نمی‌شود.</b> چون دیالوگ لایهٔ سفارشی با <code>btnNegative</code> دارد، منطق درست باید <u>visibility</u> دکمهٔ منفی را بر اساس <code>dismissable</code> ست کند:</p>
+      <pre>if (dismissable) {
+    btnNegative.setText(json.optString("dismissTxt","رد"));
+    btnNegative.setVisibility(View.VISIBLE);
+    dialog.setCancelable(true);
+} else {
+    btnNegative.setVisibility(View.GONE);
+    dialog.setCancelable(false);
+}</pre>
+      <p>در smali سه علت رایج: ثابت ویزیبیلیتی اشتباه (<code>0x8</code>=GONE به‌جای <code>0x0</code>=VISIBLE)، شرط برعکس (<code>if-eqz</code> به‌جای <code>if-nez</code>)، یا تفاوت کلید JSON. برای تعیین دقیق خط ایراد، smali همان متد را بفرست.</p>
+    </div>
+  </details>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+  const $ = s => document.querySelector(s);
+  const LS_SET = "vpnclick_gh_settings";
+  const LS_APPS = "vpnclick_apps";
+
+  function lsGet(k,def){ try{const v=localStorage.getItem(k);return v?JSON.parse(v):def;}catch(e){return def;} }
+  function lsSet(k,v){ try{localStorage.setItem(k,JSON.stringify(v));}catch(e){} }
+
+  /* ---------- theme ---------- */
+  const themeBtn=$("#themeBtn");
+  function applyTheme(t){ if(t)document.documentElement.setAttribute("data-theme",t); else document.documentElement.removeAttribute("data-theme"); }
+  applyTheme(lsGet("vpnclick_theme",null));
+  themeBtn.addEventListener("click",()=>{
+    const cur=document.documentElement.getAttribute("data-theme");
+    const dark=cur?cur==="dark":matchMedia("(prefers-color-scheme: dark)").matches;
+    const next=dark?"light":"dark"; applyTheme(next); lsSet("vpnclick_theme",next);
+  });
+
+  /* ---------- toast / note ---------- */
+  let tT;
+  function toast(msg){ const t=$("#toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(tT); tT=setTimeout(()=>t.classList.remove("show"),1900); }
+  function note(type,msg){ const n=$("#pushNote"); n.className="status-note show "+type; n.textContent=msg; }
+
+  /* ---------- settings ---------- */
+  const S={owner:$("#gh_owner"),repo:$("#gh_repo"),branch:$("#gh_branch"),token:$("#gh_token")};
+  function loadSettings(){ const s=lsGet(LS_SET,{}); S.owner.value=s.owner||""; S.repo.value=s.repo||""; S.branch.value=s.branch||"main"; S.token.value=s.token||""; return s; }
+  function saveSettings(){ lsSet(LS_SET,{owner:S.owner.value.trim(),repo:S.repo.value.trim(),branch:(S.branch.value.trim()||"main"),token:S.token.value.trim()}); updateWho(); }
+  Object.values(S).forEach(el=>el.addEventListener("input",()=>{saveSettings();render();}));
+  function updateWho(){ const o=S.owner.value.trim(),r=S.repo.value.trim(); $("#whoami").textContent=(o&&r)?(o+"/"+r):(o||"—"); }
+
+  /* ---------- gate ---------- */
+  function showApp(){ $("#gate").hidden=true; $("#app").hidden=false; }
+  function showGate(){ $("#app").hidden=true; $("#gate").hidden=false; }
+  function hasLogin(){ const s=lsGet(LS_SET,{}); return !!(s.owner && s.repo && s.token); }
+
+  $("#gateEnter").addEventListener("click",()=>{
+    const o=$("#g_owner").value.trim(), r=$("#g_repo").value.trim(), t=$("#g_token").value.trim();
+    if(!o||!r||!t){ toast("هر سه فیلد را پر کن"); return; }
+    S.owner.value=o; S.repo.value=r; S.branch.value=S.branch.value.trim()||"main"; S.token.value=t;
+    saveSettings(); render(); showApp(); toast("خوش آمدی ✓");
+  });
+  $("#g_token").addEventListener("keydown",e=>{ if(e.key==="Enter")$("#gateEnter").click(); });
+
+  $("#logoutBtn").addEventListener("click",()=>{
+    try{ localStorage.removeItem(LS_SET); }catch(e){}
+    $("#g_owner").value=""; $("#g_repo").value=""; $("#g_token").value="";
+    loadSettings(); showGate(); toast("خارج شدی");
+  });
+
+  /* ---------- form ---------- */
+  const F={
+    name:$("#app_name"), title:$("#f_title"), message:$("#f_message"), okTxt:$("#f_okTxt"),
+    tg:$("#f_tg"), useRaw:$("#f_useRaw"), okUrlRaw:$("#f_okUrlRaw"),
+    dismissable:$("#f_dismissable"), dismissTxt:$("#f_dismissTxt"), status:$("#f_status")
+  };
+  let editingId=null;
+
+  function fileName(){ const n=F.name.value.trim()||"app"; return n.replace(/\.txt$/i,"")+".txt"; }
+  function okUrl(){
+    if(F.useRaw.checked) return F.okUrlRaw.value.trim();
+    const d=F.tg.value.trim().replace(/^@/,""); return d?("tg://resolve?domain="+d):"";
+  }
+  function rawUrl(){
+    const o=S.owner.value.trim(), r=S.repo.value.trim(), b=(S.branch.value.trim()||"main");
+    if(!o||!r) return "";
+    return `https://raw.githubusercontent.com/${o}/${r}/refs/heads/${b}/${encodeURIComponent(fileName())}`;
+  }
+  function configObj(){
+    return { title:F.title.value, message:F.message.value, dismissable:F.dismissable.checked,
+      dismissTxt:F.dismissTxt.value||"رد", okTxt:F.okTxt.value, okUrl:okUrl(), status:F.status.checked?"ok":"off" };
+  }
+  function configJson(){ return JSON.stringify(configObj()); }
+  function highlight(obj){
+    const esc=s=>s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+    let out="{"; const keys=Object.keys(obj);
+    keys.forEach((k,i)=>{ const v=obj[k];
+      out+=`<span class="tok-key">"${esc(k)}"</span>:`;
+      out+=(typeof v==="boolean")?`<span class="tok-bool">${v}</span>`:`<span class="tok-str">"${esc(String(v))}"</span>`;
+      if(i<keys.length-1) out+=","; });
+    return out+"}";
+  }
+
+  function render(){
+    $("#filename_preview").textContent=fileName();
+    $("#okurl_preview").textContent=okUrl()||"—";
+    $("#rawUrlField").hidden=!F.useRaw.checked;
+    $("#dismissTxtField").hidden=!F.dismissable.checked;
+    const obj=configObj();
+    $("#jsonOut").innerHTML=highlight(obj);
+    $("#rawLink").textContent=rawUrl()||"ابتدا اتصال را کامل کن";
+    $("#pv_title").textContent=obj.title||"عنوان";
+    $("#pv_msg").textContent=obj.message||"متن پیام";
+    $("#pv_ok").textContent=obj.okTxt||"عضویت";
+    const no=$("#pv_no"); no.textContent=obj.dismissTxt||"رد"; no.style.display=obj.dismissable?"":"none";
+  }
+  Object.values(F).forEach(el=>el.addEventListener("input",render));
+  $("#app_name").addEventListener("input",render);
+
+  /* ---------- list ---------- */
+  function getApps(){ return lsGet(LS_APPS,[]); }
+  function setApps(a){ lsSet(LS_APPS,a); renderList(); }
+  function renderList(){
+    const apps=getApps(), box=$("#appList");
+    if(!apps.length){ box.innerHTML='<div class="empty">هنوز برنامه‌ای ذخیره نشده.<br>فرم را پر کن و «ذخیره در لیست» را بزن.</div>'; return; }
+    box.innerHTML="";
+    apps.forEach(app=>{
+      const el=document.createElement("div"); el.className="app-item";
+      el.innerHTML=`<span class="st ${app.status!=="off"?"on":"off"}">${app.status!=="off"?"on":"off"}</span>
+        <span class="nm">${app.name.replace(/</g,"&lt;")}</span>
+        <span class="acts">
+          <button class="iconbtn" data-act="edit" title="ویرایش">✎</button>
+          <button class="iconbtn" data-act="link" title="کپی لینک">🔗</button>
+          <button class="iconbtn del" data-act="del" title="حذف">🗑</button>
+        </span>`;
+      el.querySelector('[data-act=edit]').onclick=()=>loadApp(app.id);
+      el.querySelector('[data-act=link]').onclick=()=>{ if(app.rawUrl){copy(app.rawUrl);toast("لینک کپی شد");} else toast("لینک ذخیره نشده"); };
+      el.querySelector('[data-act=del]').onclick=()=>{ setApps(getApps().filter(a=>a.id!==app.id)); toast("حذف شد"); };
+      box.appendChild(el);
+    });
+  }
+  function currentApp(){
+    return { id: editingId||("a"+Date.now()), name:F.name.value.trim()||"app",
+      title:F.title.value, message:F.message.value, okTxt:F.okTxt.value, tg:F.tg.value,
+      useRaw:F.useRaw.checked, okUrlRaw:F.okUrlRaw.value, dismissable:F.dismissable.checked,
+      dismissTxt:F.dismissTxt.value, status:F.status.checked?"ok":"off", rawUrl:rawUrl() };
+  }
+  function loadApp(id){
+    const app=getApps().find(a=>a.id===id); if(!app)return; editingId=app.id;
+    F.name.value=app.name||""; F.title.value=app.title||""; F.message.value=app.message||"";
+    F.okTxt.value=app.okTxt||""; F.tg.value=app.tg||""; F.useRaw.checked=!!app.useRaw;
+    F.okUrlRaw.value=app.okUrlRaw||""; F.dismissable.checked=!!app.dismissable;
+    F.dismissTxt.value=app.dismissTxt||"رد"; F.status.checked=app.status!=="off";
+    render(); toast("در فرم بارگذاری شد"); window.scrollTo({top:0,behavior:"smooth"});
+  }
+  function saveLocal(){
+    if(!F.name.value.trim()){ toast("نام برنامه را وارد کن"); F.name.focus(); return false; }
+    const apps=getApps(), app=currentApp(); const idx=apps.findIndex(a=>a.id===app.id);
+    if(idx>=0) apps[idx]=app; else apps.push(app);
+    setApps(apps); editingId=app.id; return true;
+  }
+
+  /* ---------- copy ---------- */
+  function copy(text){ try{ navigator.clipboard.writeText(text).catch(()=>fallbackCopy(text)); }catch(e){ fallbackCopy(text); } }
+  function fallbackCopy(text){ const ta=document.createElement("textarea"); ta.value=text; ta.style.position="fixed"; ta.style.opacity="0";
+    document.body.appendChild(ta); ta.select(); try{document.execCommand("copy");}catch(e){} document.body.removeChild(ta); }
+  $("#copyJson").onclick=()=>{copy(configJson());toast("JSON کپی شد");};
+  $("#btnCopyTxt").onclick=()=>{copy(configJson());toast("محتوای فایل کپی شد");};
+  $("#copyLink").onclick=()=>{const u=rawUrl(); if(u){copy(u);toast("لینک کپی شد");}else toast("اتصال را کامل کن");};
+  $("#btnSaveLocal").onclick=()=>{ if(saveLocal()) toast("ذخیره شد ✓"); };
+  $("#btnReset").onclick=()=>{
+    editingId=null; F.name.value="";F.title.value="";F.message.value="";F.okTxt.value="";F.tg.value="";
+    F.useRaw.checked=false;F.okUrlRaw.value="";F.dismissable.checked=false;F.dismissTxt.value="رد";F.status.checked=true;
+    render(); toast("فرم پاک شد");
+  };
+
+  /* ---------- GitHub push ---------- */
+  function b64utf8(str){ const bytes=new TextEncoder().encode(str); let bin=""; bytes.forEach(b=>bin+=String.fromCharCode(b)); return btoa(bin); }
+  $("#btnPush").onclick=async function(){
+    const o=S.owner.value.trim(), r=S.repo.value.trim(), b=(S.branch.value.trim()||"main"), tok=S.token.value.trim();
+    if(!o||!r||!tok){ note("err","اتصال گیت‌هاب کامل نیست (یوزرنیم/ریپو/توکن)."); return; }
+    if(!F.name.value.trim()){ note("err","نام برنامه را وارد کن."); return; }
+    const path=fileName(), api=`https://api.github.com/repos/${o}/${r}/contents/${encodeURIComponent(path)}`;
+    const headers={Authorization:"Bearer "+tok,Accept:"application/vnd.github+json","Content-Type":"application/json"};
+    note("info","در حال ارسال به گیت‌هاب…"); this.disabled=true;
+    try{
+      let sha=null;
+      const g=await fetch(api+"?ref="+encodeURIComponent(b),{headers});
+      if(g.status===200){ const j=await g.json(); sha=j.sha; }
+      else if(g.status===401){ note("err","توکن نامعتبر است (۴۰۱)."); this.disabled=false; return; }
+      const body={message:`update ${path} via panel`,content:b64utf8(configJson()),branch:b};
+      if(sha) body.sha=sha;
+      const p=await fetch(api,{method:"PUT",headers,body:JSON.stringify(body)});
+      if(p.status===200||p.status===201){ saveLocal(); note("ok","✓ ذخیره شد. لینک: "+rawUrl()); toast("روی گیت‌هاب ذخیره شد ✓"); }
+      else{ const e=await p.json().catch(()=>({}));
+        if(p.status===404) note("err","ریپو یا مسیر پیدا نشد (۴۰۴). یوزرنیم/ریپو/دسترسی توکن را بررسی کن.");
+        else if(p.status===403) note("err","دسترسی رد شد (۴۰۳). توکن باید Contents: write روی این ریپو داشته باشد.");
+        else if(p.status===422) note("err","خطای ۴۲۲: احتمالاً برنچ اشتباه است. برنچ را چک کن.");
+        else note("err","خطا ("+p.status+"): "+(e.message||"نامشخص")); }
+    }catch(err){ note("err","ارتباط با گیت‌هاب برقرار نشد: "+err.message); }
+    this.disabled=false;
+  };
+
+  /* ---------- init ---------- */
+  loadSettings(); updateWho(); render(); renderList();
+  if(hasLogin()) showApp(); else showGate();
+})();
+</script>

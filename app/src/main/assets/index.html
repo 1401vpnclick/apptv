@@ -1,14 +1,13 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <title>مدیریت گیت</title>
 <style>
-  /* Single-screen app shell: fixed top bar + tab strip + one scrolling content area.
+  /* Single-screen app shell: top bar + tab strip + one scrolling content area.
      Dark-first — deep slate surfaces, telegram-blue accent, green "on" status. */
   :root{
     --bg:#0e141c; --surface:#17212e; --surface-2:#1e2b3a; --line:#2a3a4d;
     --fg:#e8eef5; --muted:#8ba0b6; --accent:#2ea6ff; --accent-ink:#04223b;
     --ok:#32c871; --warn:#ffb23e; --danger:#ff5d5d;
-    --radius:14px; --gap:14px;
-    --bar:58px;
+    --radius:14px; --gap:14px; --bar:58px;
     --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
     --ui:"Vazirmatn","Segoe UI",Tahoma,system-ui,sans-serif;
     color-scheme:dark;
@@ -55,18 +54,14 @@
   .btn.flex{flex:1;min-width:115px}
   .sep{height:1px;background:var(--line);margin:14px 0}
 
-  /* ============ LOGIN GATE ============ */
+  /* GATE */
   #gate{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;overflow:auto;
     padding:40px max(18px,env(safe-area-inset-left,0px)) 40px max(18px,env(safe-area-inset-right,0px));z-index:30;background:var(--bg)}
-  .gate-card{width:100%;max-width:400px;background:var(--surface);border:1px solid var(--line);
-    border-radius:18px;padding:26px 22px;box-shadow:0 24px 60px -24px rgba(0,0,0,.6)}
-  .gate-logo{width:62px;height:62px;border-radius:16px;margin:0 auto 14px;
-    background:linear-gradient(145deg,var(--accent),#1577c7);display:grid;place-items:center;
-    color:#fff;font-weight:800;font-size:25px}
+  .gate-card{width:100%;max-width:400px;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:26px 22px;box-shadow:0 24px 60px -24px rgba(0,0,0,.6)}
+  .gate-logo{width:62px;height:62px;border-radius:16px;margin:0 auto 14px;background:linear-gradient(145deg,var(--accent),#1577c7);display:grid;place-items:center;color:#fff;font-weight:800;font-size:25px}
   .gate-card h1{font-size:1.25rem;text-align:center}
   .gate-card .tag{text-align:center;color:var(--muted);font-size:.84rem;margin:5px 0 20px}
-  .gate-sec{display:flex;gap:8px;background:var(--surface-2);border:1px solid var(--line);
-    border-radius:10px;padding:10px 12px;font-size:.75rem;color:var(--muted);line-height:1.8;margin-top:14px}
+  .gate-sec{display:flex;gap:8px;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:.75rem;color:var(--muted);line-height:1.8;margin-top:14px}
   .gate-sec b{color:var(--ok)}
   .note-box{font-size:.8rem;margin-top:12px;padding:10px 12px;border-radius:10px;line-height:1.7;display:none}
   .note-box.show{display:block}
@@ -74,27 +69,23 @@
   .note-box.info{background:color-mix(in srgb,var(--accent) 15%,transparent);color:var(--accent)}
   .note-box.ok{background:color-mix(in srgb,var(--ok) 15%,transparent);color:var(--ok)}
 
-  /* ============ APP SHELL ============ */
+  /* APP SHELL */
   #app{display:flex;flex-direction:column;height:100%}
   .topbar{height:calc(var(--bar) + env(safe-area-inset-top,0px));padding-top:env(safe-area-inset-top,0px);
     display:flex;align-items:center;gap:11px;background:var(--surface);border-bottom:1px solid var(--line);
     padding-inline:max(12px,env(safe-area-inset-left,0px)) max(12px,env(safe-area-inset-right,0px));flex:none;z-index:10}
-  .hamb{width:40px;height:40px;flex:none;border-radius:11px;border:1px solid var(--line);
-    background:var(--surface-2);color:var(--fg);display:grid;place-items:center}
+  .hamb{width:40px;height:40px;flex:none;border-radius:11px;border:1px solid var(--line);background:var(--surface-2);color:var(--fg);display:grid;place-items:center}
   .hamb span{display:block;width:17px;height:2px;background:currentColor;border-radius:2px;box-shadow:0 5px 0 currentColor,0 -5px 0 currentColor}
   .tb-title{min-width:0}
   .tb-title h1{font-size:1.06rem}
   .tb-title p{margin:0;color:var(--muted);font-size:.73rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .tb-title p .who{color:var(--accent);font-weight:700}
 
-  .tabs{display:flex;gap:4px;background:var(--surface);border-bottom:1px solid var(--line);
-    padding:7px max(10px,env(safe-area-inset-left,0px));flex:none}
-  .tab{flex:1;border:none;background:transparent;color:var(--muted);font-weight:700;font-size:.86rem;
-    padding:9px;border-radius:9px;transition:.15s}
+  .tabs{display:flex;gap:4px;background:var(--surface);border-bottom:1px solid var(--line);padding:7px max(10px,env(safe-area-inset-left,0px));flex:none}
+  .tab{flex:1;border:none;background:transparent;color:var(--muted);font-weight:700;font-size:.86rem;padding:9px;border-radius:9px;transition:.15s}
   .tab.active{background:var(--surface-2);color:var(--accent)}
 
-  .content{flex:1;overflow-y:auto;overflow-x:hidden;
-    padding:14px max(14px,env(safe-area-inset-left,0px)) calc(28px + env(safe-area-inset-bottom,0px)) max(14px,env(safe-area-inset-right,0px))}
+  .content{flex:1;overflow-y:auto;overflow-x:hidden;padding:14px max(14px,env(safe-area-inset-left,0px)) calc(28px + env(safe-area-inset-bottom,0px)) max(14px,env(safe-area-inset-right,0px))}
   .view{max-width:620px;margin:0 auto}
 
   .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px}
@@ -108,8 +99,7 @@
   .hint{font-size:.72rem;color:var(--muted);margin-top:5px}
   .hint code{font-family:var(--mono);background:var(--surface-2);padding:1px 5px;border-radius:5px;font-size:.92em;direction:ltr;display:inline-block}
 
-  .toggle{display:flex;align-items:center;justify-content:space-between;gap:12px;
-    background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:11px 13px}
+  .toggle{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:11px 13px}
   .toggle .lbl{font-size:.85rem}
   .toggle .lbl small{display:block;color:var(--muted);font-size:.73rem;margin-top:2px}
   .sw{position:relative;width:46px;height:26px;flex:none}
@@ -120,14 +110,10 @@
   .sw input:checked + .track + .knob{right:23px}
 
   .btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:4px}
-  pre.json{font-family:var(--mono);direction:ltr;background:var(--surface-2);border:1px solid var(--line);
-    border-radius:10px;padding:12px;font-size:.78rem;line-height:1.7;overflow-x:auto;white-space:pre;margin:0;color:var(--fg)}
+  pre.json{font-family:var(--mono);direction:ltr;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:12px;font-size:.78rem;line-height:1.7;overflow-x:auto;white-space:pre;margin:0;color:var(--fg)}
   .tok-key{color:var(--accent)} .tok-str{color:var(--ok)} .tok-bool{color:var(--warn)}
-  .urlbox{display:flex;align-items:center;gap:8px;background:var(--surface-2);border:1px solid var(--line);
-    border-radius:10px;padding:8px 10px;margin-top:9px}
+  .urlbox{display:flex;align-items:center;gap:8px;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin-top:9px}
   .urlbox code{font-family:var(--mono);direction:ltr;font-size:.74rem;color:var(--fg);overflow-x:auto;white-space:nowrap;flex:1;min-width:0}
-  .mini{border:1px solid var(--line);background:var(--surface);color:var(--muted);border-radius:8px;padding:6px 10px;font-size:.74rem;font-weight:600;flex:none}
-  .mini:hover{color:var(--accent);border-color:var(--accent)}
 
   .phone{background:var(--surface-2);border:1px solid var(--line);border-radius:16px;padding:18px 14px;display:grid;place-items:center}
   .dlg{width:100%;max-width:290px;background:#fff;color:#1a1a1a;border-radius:14px;padding:18px 16px 14px;box-shadow:0 18px 40px -12px rgba(0,0,0,.5);text-align:center}
@@ -144,11 +130,14 @@
   .status-note.err{background:color-mix(in srgb,var(--danger) 15%,transparent);color:var(--danger)}
   .status-note.info{background:color-mix(in srgb,var(--accent) 15%,transparent);color:var(--accent)}
 
-  /* repo management list */
-  .repo-item{display:flex;align-items:center;gap:12px;background:var(--surface-2);border:1px solid var(--line);
-    border-radius:11px;padding:12px 13px;margin-bottom:9px}
-  .repo-item .chk{width:24px;height:24px;flex:none;border-radius:7px;border:2px solid var(--line);background:transparent;
-    display:grid;place-items:center;color:#fff;font-size:14px;font-weight:800}
+  /* category chips */
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+  .chip{border:1px solid var(--line);background:var(--surface-2);color:var(--muted);border-radius:30px;padding:7px 14px;font-size:.8rem;font-weight:700;display:inline-flex;align-items:center;gap:6px}
+  .chip.active{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+  .chip .cnt{font-size:.68rem;opacity:.8}
+
+  .repo-item{display:flex;align-items:center;gap:12px;background:var(--surface-2);border:1px solid var(--line);border-radius:11px;padding:12px 13px;margin-bottom:9px}
+  .repo-item .chk{width:24px;height:24px;flex:none;border-radius:7px;border:2px solid var(--line);background:transparent;display:grid;place-items:center;color:#fff;font-size:14px;font-weight:800}
   .repo-item .chk.on{background:var(--ok);border-color:var(--ok)}
   .repo-item .info{flex:1;min-width:0}
   .repo-item .nm{font-weight:700;font-size:.88rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -162,9 +151,7 @@
   /* drawer */
   #scrim{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:40;opacity:0;transition:.2s;pointer-events:none}
   #scrim.show{opacity:1;pointer-events:auto}
-  #drawer{position:fixed;top:0;bottom:0;left:0;width:min(84vw,310px);z-index:41;background:var(--surface);
-    border-right:1px solid var(--line);transform:translateX(-102%);transition:transform .22s ease;
-    padding:calc(18px + env(safe-area-inset-top,0px)) 16px 24px;overflow-y:auto;box-shadow:8px 0 30px -10px rgba(0,0,0,.5)}
+  #drawer{position:fixed;top:0;bottom:0;left:0;width:min(84vw,310px);z-index:41;background:var(--surface);border-right:1px solid var(--line);transform:translateX(-102%);transition:transform .22s ease;padding:calc(18px + env(safe-area-inset-top,0px)) 16px 24px;overflow-y:auto;box-shadow:8px 0 30px -10px rgba(0,0,0,.5)}
   #drawer.show{transform:translateX(0)}
   #drawer .dhead{display:flex;align-items:center;gap:10px;margin-bottom:14px}
   #drawer .dhead .l{width:34px;height:34px;border-radius:9px;background:linear-gradient(145deg,var(--accent),#1577c7);display:grid;place-items:center;color:#fff;font-weight:800;font-size:14px}
@@ -178,13 +165,11 @@
   .dbtn .ic{width:20px;text-align:center}
   .soon{color:var(--muted);font-size:.77rem;padding:6px 8px;line-height:1.8}
 
-  .toast{position:fixed;bottom:calc(20px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%) translateY(20px);
-    background:var(--fg);color:var(--bg);padding:11px 20px;border-radius:30px;font-size:.84rem;font-weight:700;
-    opacity:0;transition:.25s;z-index:60;pointer-events:none;box-shadow:0 8px 24px -8px rgba(0,0,0,.5)}
+  .toast{position:fixed;bottom:calc(20px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%) translateY(20px);background:var(--fg);color:var(--bg);padding:11px 20px;border-radius:30px;font-size:.84rem;font-weight:700;opacity:0;transition:.25s;z-index:60;pointer-events:none;box-shadow:0 8px 24px -8px rgba(0,0,0,.5)}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 </style>
 
-<!-- ============ LOGIN GATE ============ -->
+<!-- GATE -->
 <div id="gate">
   <div class="gate-card">
     <div class="gate-logo">گ</div>
@@ -200,7 +185,7 @@
   </div>
 </div>
 
-<!-- ============ DRAWER ============ -->
+<!-- DRAWER -->
 <div id="scrim"></div>
 <nav id="drawer" aria-label="منو">
   <div class="dhead"><div class="l">گ</div><h3>منو</h3></div>
@@ -216,33 +201,32 @@
   <button class="dbtn danger" id="m_logout"><span class="ic">⇋</span> خروج از حساب</button>
 </nav>
 
-<!-- ============ APP ============ -->
+<!-- APP -->
 <div id="app" hidden>
   <div class="topbar">
     <button class="hamb" id="hambBtn" aria-label="منو"><span></span></button>
-    <div class="tb-title">
-      <h1>مدیریت گیت</h1>
-      <p>متصل به <span class="who" id="whoami">—</span></p>
-    </div>
+    <div class="tb-title"><h1>مدیریت گیت</h1><p>متصل به <span class="who" id="whoami">—</span></p></div>
   </div>
-
   <div class="tabs">
-    <button class="tab active" id="tabEditorBtn" data-tab="editor">✎ ویرایشگر</button>
-    <button class="tab" id="tabRepoBtn" data-tab="repo">≣ مدیریت ریپو</button>
+    <button class="tab active" data-tab="editor">✎ ویرایشگر</button>
+    <button class="tab" data-tab="repo">≣ مدیریت ریپو</button>
   </div>
 
   <div class="content">
-    <!-- ===== EDITOR VIEW ===== -->
+    <!-- EDITOR -->
     <div class="view" id="view-editor">
       <div class="card">
         <h2><span class="ic">＋</span> <span id="editorTitle">افزودن برنامه</span></h2>
-        <p class="sub">اسم برنامه را بنویس؛ فایل خودکار در همین ریپو ذخیره می‌شود.</p>
-
-        <div class="field">
-          <label>نام برنامه (نام فایل)</label>
-          <input type="text" id="app_name" placeholder="مثلاً CloverVPN 1.2.3">
-          <p class="hint">نام فایل: <code id="filename_preview">app.txt</code></p>
+        <p class="sub">دسته و نام را انتخاب کن؛ فایل در مسیر «دسته/نام» ذخیره می‌شود.</p>
+        <div class="row">
+          <div class="field"><label>دسته (پوشه)</label>
+            <input type="text" id="f_cat" list="catlist" placeholder="solv / irany / click" autocomplete="off" autocapitalize="none" spellcheck="false">
+            <datalist id="catlist"><option value="solv"><option value="irany"><option value="click"></datalist>
+          </div>
+          <div class="field"><label>نام برنامه (فایل)</label>
+            <input type="text" id="app_name" placeholder="مثلاً CloverVPN 1.2.3"></div>
         </div>
+        <p class="hint">مسیر فایل: <code id="filename_preview">app.txt</code></p>
         <div class="sep"></div>
         <div class="field"><label>عنوان دیالوگ (title)</label><input type="text" id="f_title" placeholder="کاربر گرامی"></div>
         <div class="field"><label>متن پیام (message)</label><textarea id="f_message" placeholder="جهت استفاده از این Vpn در کانال تلگرام ما عضو شوید ♥️"></textarea></div>
@@ -251,7 +235,6 @@
           <div class="field"><label>یوزرنیم کانال تلگرام</label><input type="text" id="f_tg" placeholder="Vpn_irany"></div>
         </div>
         <p class="hint">لینک دکمه: <code id="okurl_preview">tg://resolve?domain=Vpn_irany</code></p>
-
         <div class="toggle" style="margin-bottom:12px">
           <div class="lbl">لینک دلخواه به‌جای تلگرام<small>اگر روشن باشد از فیلد زیر استفاده می‌شود</small></div>
           <label class="sw"><input type="checkbox" id="f_useRaw"><span class="track"></span><span class="knob"></span></label>
@@ -267,7 +250,6 @@
           <div class="lbl">وضعیت دیالوگ (status)<small>روشن = نمایش داده شود · خاموش = غیرفعال</small></div>
           <label class="sw"><input type="checkbox" id="f_status" checked><span class="track"></span><span class="knob"></span></label>
         </div>
-
         <div class="sep"></div>
         <div class="btns">
           <button class="btn primary flex" id="btnPush">☁ ذخیره در ریپو</button>
@@ -279,7 +261,6 @@
         </div>
         <div class="status-note" id="pushNote"></div>
       </div>
-
       <div class="card">
         <h2><span class="ic">◇</span> پیش‌نمایش</h2>
         <pre class="json" id="jsonOut"></pre>
@@ -288,24 +269,26 @@
           <div class="dlg">
             <div class="dtitle" id="pv_title">کاربر گرامی</div>
             <div class="dmsg" id="pv_msg">متن پیام</div>
-            <div class="dbtns">
-              <button class="db ok" id="pv_ok">عضویت</button>
-              <button class="db no" id="pv_no">رد</button>
-            </div>
+            <div class="dbtns"><button class="db ok" id="pv_ok">عضویت</button><button class="db no" id="pv_no">رد</button></div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- ===== REPO MANAGEMENT VIEW ===== -->
+    <!-- REPO MANAGEMENT -->
     <div class="view" id="view-repo" hidden>
       <div class="card">
         <h2><span class="ic">≣</span> مدیریت ریپو</h2>
-        <p class="sub">پروژه‌های ساخته‌شده در ریپو. تیک = دیالوگ روشن است. برای ویرایش روی ✎ بزن.</p>
-        <div class="btns" style="margin-bottom:12px">
-          <button class="btn flex" id="btnRefresh">↻ تازه‌سازی لیست</button>
+        <p class="sub">یک دسته را انتخاب کن. تیک = دیالوگ روشن. ✎ = ویرایش.</p>
+        <div class="chips" id="catChips"><span class="empty" style="padding:6px">برای بارگذاری دسته‌ها «تازه‌سازی» را بزن.</span></div>
+        <div class="toggle" style="margin-bottom:12px">
+          <div class="lbl">فقط دیالوگ‌های فعال<small>نمایش موارد روشن (status: ok)</small></div>
+          <label class="sw"><input type="checkbox" id="onlyActive"><span class="track"></span><span class="knob"></span></label>
         </div>
-        <div id="repoList"><div class="empty">برای دیدن پروژه‌ها «تازه‌سازی» را بزن.</div></div>
+        <div class="btns" style="margin-bottom:12px">
+          <button class="btn flex" id="btnRefresh">↻ تازه‌سازی</button>
+        </div>
+        <div id="repoList"><div class="empty">یک دسته انتخاب کن.</div></div>
       </div>
     </div>
   </div>
@@ -316,199 +299,216 @@
 <script>
 (function(){
   "use strict";
-  const $ = s => document.querySelector(s);
+  const $=s=>document.querySelector(s);
   const LS_SET="vpnclick_gh_settings", GH="https://api.github.com";
-  let CONN = (function(){try{return JSON.parse(localStorage.getItem(LS_SET))||{};}catch(e){return {};}})();
-  let editingSha=null; // sha of the file currently being edited (for in-place update)
+  let CONN=(function(){try{return JSON.parse(localStorage.getItem(LS_SET))||{};}catch(e){return {};}})();
+  let editingSha=null;            // sha of file being edited
+  let curCat="__root__";          // selected category in repo mgmt
+  let curFiles=[];                // loaded files of current category
 
-  function lsSet(k,v){ try{localStorage.setItem(k,JSON.stringify(v));}catch(e){} }
-  function ghHeaders(){ return {Authorization:"Bearer "+CONN.token, Accept:"application/vnd.github+json"}; }
-  function b64utf8(str){ const b=new TextEncoder().encode(str); let s=""; b.forEach(x=>s+=String.fromCharCode(x)); return btoa(s); }
-  function b64decodeUtf8(b64){ try{ const bin=atob(b64.replace(/\n/g,"")); const bytes=Uint8Array.from(bin,c=>c.charCodeAt(0)); return new TextDecoder().decode(bytes);}catch(e){return "";} }
+  function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+  function ghH(){return {Authorization:"Bearer "+CONN.token,Accept:"application/vnd.github+json"};}
+  function b64e(s){const b=new TextEncoder().encode(s);let o="";b.forEach(x=>o+=String.fromCharCode(x));return btoa(o);}
+  function b64d(b){try{const bin=atob((b||"").replace(/\n/g,""));return new TextDecoder().decode(Uint8Array.from(bin,c=>c.charCodeAt(0)));}catch(e){return "";}}
+  const branch=()=>CONN.branch||"main";
 
   /* theme */
-  function applyTheme(t){ if(t)document.documentElement.setAttribute("data-theme",t); else document.documentElement.removeAttribute("data-theme"); }
+  function applyTheme(t){if(t)document.documentElement.setAttribute("data-theme",t);else document.documentElement.removeAttribute("data-theme");}
   (function(){try{applyTheme(JSON.parse(localStorage.getItem("vpnclick_theme")));}catch(e){}})();
-  function toggleTheme(){ const cur=document.documentElement.getAttribute("data-theme");
-    const dark=cur?cur==="dark":matchMedia("(prefers-color-scheme: dark)").matches; const n=dark?"light":"dark";
-    applyTheme(n); lsSet("vpnclick_theme",n); }
+  function toggleTheme(){const c=document.documentElement.getAttribute("data-theme");const d=c?c==="dark":matchMedia("(prefers-color-scheme: dark)").matches;const n=d?"light":"dark";applyTheme(n);lsSet("vpnclick_theme",n);}
 
-  /* toast / notes */
-  let tT; function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(tT);tT=setTimeout(()=>t.classList.remove("show"),1900);}
-  function note(type,m){const n=$("#pushNote");n.className="status-note show "+type;n.textContent=m;}
-  function gnote(type,m){const n=$("#gateNote");n.className="note-box show "+type;n.textContent=m;}
+  let tT;function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(tT);tT=setTimeout(()=>t.classList.remove("show"),1900);}
+  function note(t,m){const n=$("#pushNote");n.className="status-note show "+t;n.textContent=m;}
+  function gnote(t,m){const n=$("#gateNote");n.className="note-box show "+t;n.textContent=m;}
 
-  /* ---------- GATE ---------- */
+  /* GATE */
   async function doLogin(){
-    const repoIn=$("#g_repo").value.trim().replace(/^\/+|\/+$/g,""); const tok=$("#g_token").value.trim();
-    if(!repoIn||!tok){ gnote("err","ریپو و توکن را وارد کن."); return; }
-    let ownerHint=null, repoName=repoIn;
-    if(repoIn.includes("/")){ const p=repoIn.split("/"); ownerHint=p[0]; repoName=p[1]; }
-    const btn=$("#gateEnter"); btn.disabled=true; gnote("info","در حال بررسی اتصال…");
+    const repoIn=$("#g_repo").value.trim().replace(/^\/+|\/+$/g,"");const tok=$("#g_token").value.trim();
+    if(!repoIn||!tok){gnote("err","ریپو و توکن را وارد کن.");return;}
+    let ownerHint=null,repoName=repoIn;
+    if(repoIn.includes("/")){const p=repoIn.split("/");ownerHint=p[0];repoName=p[1];}
+    const b=$("#gateEnter");b.disabled=true;gnote("info","در حال بررسی اتصال…");
     try{
-      CONN={token:tok}; // temp for headers
-      let owner=ownerHint;
-      if(!owner){ const u=await fetch(GH+"/user",{headers:ghHeaders()});
-        if(u.status===401){ gnote("err","توکن نامعتبر است."); btn.disabled=false; return; }
-        if(!u.ok){ gnote("err","خطا در خواندن حساب ("+u.status+")."); btn.disabled=false; return; }
-        owner=(await u.json()).login; }
-      const r=await fetch(`${GH}/repos/${owner}/${encodeURIComponent(repoName)}`,{headers:ghHeaders()});
-      if(r.status===404){ gnote("err","ریپو پیدا نشد یا توکن به این ریپو دسترسی ندارد."); btn.disabled=false; return; }
-      if(r.status===401){ gnote("err","توکن نامعتبر است."); btn.disabled=false; return; }
-      if(!r.ok){ gnote("err","خطا ("+r.status+")."); btn.disabled=false; return; }
-      const info=await r.json(); const full=(info.full_name||(owner+"/"+repoName)).split("/");
-      CONN={owner:full[0], repo:full[1], branch:info.default_branch||"main", token:tok};
-      lsSet(LS_SET,CONN); gnote("ok","اتصال برقرار شد ✓"); enterApp();
-    }catch(e){ gnote("err","ارتباط برقرار نشد: "+e.message); }
-    btn.disabled=false;
+      CONN={token:tok};let owner=ownerHint;
+      if(!owner){const u=await fetch(GH+"/user",{headers:ghH()});
+        if(u.status===401){gnote("err","توکن نامعتبر است.");b.disabled=false;return;}
+        if(!u.ok){gnote("err","خطا در خواندن حساب ("+u.status+").");b.disabled=false;return;}
+        owner=(await u.json()).login;}
+      const r=await fetch(`${GH}/repos/${owner}/${encodeURIComponent(repoName)}`,{headers:ghH()});
+      if(r.status===404){gnote("err","ریپو پیدا نشد یا توکن دسترسی ندارد.");b.disabled=false;return;}
+      if(r.status===401){gnote("err","توکن نامعتبر است.");b.disabled=false;return;}
+      if(!r.ok){gnote("err","خطا ("+r.status+").");b.disabled=false;return;}
+      const info=await r.json();const full=(info.full_name||(owner+"/"+repoName)).split("/");
+      CONN={owner:full[0],repo:full[1],branch:info.default_branch||"main",token:tok};
+      lsSet(LS_SET,CONN);gnote("ok","اتصال برقرار شد ✓");enterApp();
+    }catch(e){gnote("err","ارتباط برقرار نشد: "+e.message);}
+    b.disabled=false;
   }
   $("#gateEnter").addEventListener("click",doLogin);
   $("#g_token").addEventListener("keydown",e=>{if(e.key==="Enter")doLogin();});
-
-  function hasLogin(){ return !!(CONN.owner&&CONN.repo&&CONN.token); }
-  function updateWho(){ const s=`${CONN.owner||""}/${CONN.repo||""}`; const v=s==="/"?"—":s; $("#whoami").textContent=v; $("#d_repo").textContent=v; }
-  function enterApp(){ $("#gate").hidden=true; $("#app").hidden=false; updateWho(); render(); }
+  function hasLogin(){return !!(CONN.owner&&CONN.repo&&CONN.token);}
+  function updateWho(){const s=`${CONN.owner||""}/${CONN.repo||""}`;const v=s==="/"?"—":s;$("#whoami").textContent=v;$("#d_repo").textContent=v;}
+  function enterApp(){$("#gate").hidden=true;$("#app").hidden=false;updateWho();render();}
   function backToGate(clear){
-    if(clear){ try{localStorage.removeItem(LS_SET);}catch(e){} CONN={}; $("#g_repo").value=""; $("#g_token").value=""; }
-    else { $("#g_repo").value=CONN.repo||""; $("#g_token").value=CONN.token||""; }
-    $("#gateNote").className="note-box"; $("#app").hidden=true; $("#gate").hidden=false;
+    if(clear){try{localStorage.removeItem(LS_SET);}catch(e){}CONN={};$("#g_repo").value="";$("#g_token").value="";}
+    else{$("#g_repo").value=CONN.repo||"";$("#g_token").value=CONN.token||"";}
+    $("#gateNote").className="note-box";$("#app").hidden=true;$("#gate").hidden=false;
   }
 
-  /* ---------- DRAWER ---------- */
-  function openD(){$("#drawer").classList.add("show");$("#scrim").classList.add("show");}
-  function closeD(){$("#drawer").classList.remove("show");$("#scrim").classList.remove("show");}
+  /* DRAWER + TABS */
+  const openD=()=>{$("#drawer").classList.add("show");$("#scrim").classList.add("show");};
+  const closeD=()=>{$("#drawer").classList.remove("show");$("#scrim").classList.remove("show");};
   $("#hambBtn").addEventListener("click",openD);
   $("#scrim").addEventListener("click",closeD);
   $("#m_theme").addEventListener("click",toggleTheme);
   $("#m_newrepo").addEventListener("click",()=>{closeD();backToGate(false);});
   $("#m_logout").addEventListener("click",()=>{closeD();backToGate(true);});
-  $("#m_manage").addEventListener("click",()=>{closeD();switchTab("repo");loadRepoFiles();});
-
-  /* ---------- TABS ---------- */
+  $("#m_manage").addEventListener("click",()=>{closeD();switchTab("repo");loadCategories();});
   function switchTab(name){
     document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("active",t.dataset.tab===name));
-    $("#view-editor").hidden = name!=="editor";
-    $("#view-repo").hidden = name!=="repo";
-    $(".content").scrollTop=0;
+    $("#view-editor").hidden=name!=="editor";$("#view-repo").hidden=name!=="repo";$(".content").scrollTop=0;
   }
-  document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{ switchTab(t.dataset.tab); if(t.dataset.tab==="repo") loadRepoFiles(); }));
+  document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{switchTab(t.dataset.tab);if(t.dataset.tab==="repo"&&!$("#catChips").dataset.loaded)loadCategories();}));
 
-  /* ---------- EDITOR ---------- */
-  const F={name:$("#app_name"),title:$("#f_title"),message:$("#f_message"),okTxt:$("#f_okTxt"),tg:$("#f_tg"),
-    useRaw:$("#f_useRaw"),okUrlRaw:$("#f_okUrlRaw"),dismissable:$("#f_dismissable"),dismissTxt:$("#f_dismissTxt"),status:$("#f_status")};
-  function fileName(){ const n=F.name.value.trim()||"app"; return n.replace(/\.txt$/i,"")+".txt"; }
-  function okUrl(){ if(F.useRaw.checked) return F.okUrlRaw.value.trim(); const d=F.tg.value.trim().replace(/^@/,""); return d?("tg://resolve?domain="+d):""; }
-  function rawUrl(){ if(!CONN.owner||!CONN.repo) return ""; return `https://raw.githubusercontent.com/${CONN.owner}/${CONN.repo}/refs/heads/${CONN.branch||"main"}/${encodeURIComponent(fileName())}`; }
-  function configObj(){ return {title:F.title.value,message:F.message.value,dismissable:F.dismissable.checked,
-    dismissTxt:F.dismissTxt.value||"رد",okTxt:F.okTxt.value,okUrl:okUrl(),status:F.status.checked?"ok":"off"}; }
-  function configJson(){ return JSON.stringify(configObj()); }
-  function highlight(o){ const e=s=>s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
-    let out="{"; const k=Object.keys(o); k.forEach((key,i)=>{const v=o[key];
-      out+=`<span class="tok-key">"${e(key)}"</span>:`+(typeof v==="boolean"?`<span class="tok-bool">${v}</span>`:`<span class="tok-str">"${e(String(v))}"</span>`); if(i<k.length-1)out+=",";}); return out+"}"; }
+  /* EDITOR */
+  const F={cat:$("#f_cat"),name:$("#app_name"),title:$("#f_title"),message:$("#f_message"),okTxt:$("#f_okTxt"),tg:$("#f_tg"),useRaw:$("#f_useRaw"),okUrlRaw:$("#f_okUrlRaw"),dismissable:$("#f_dismissable"),dismissTxt:$("#f_dismissTxt"),status:$("#f_status")};
+  function cat(){return F.cat.value.trim().replace(/^\/+|\/+$/g,"");}
+  function baseName(){const n=F.name.value.trim()||"app";return n.replace(/\.txt$/i,"")+".txt";}
+  function filePath(){const c=cat();return (c?c+"/":"")+baseName();}
+  function okUrl(){if(F.useRaw.checked)return F.okUrlRaw.value.trim();const d=F.tg.value.trim().replace(/^@/,"");return d?("tg://resolve?domain="+d):"";}
+  function rawUrl(){if(!CONN.owner||!CONN.repo)return "";return `https://raw.githubusercontent.com/${CONN.owner}/${CONN.repo}/refs/heads/${branch()}/${filePath().split("/").map(encodeURIComponent).join("/")}`;}
+  function configObj(){return {title:F.title.value,message:F.message.value,dismissable:F.dismissable.checked,dismissTxt:F.dismissTxt.value||"رد",okTxt:F.okTxt.value,okUrl:okUrl(),status:F.status.checked?"ok":"off"};}
+  function configJson(){return JSON.stringify(configObj());}
+  function hl(o){const e=s=>s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");let out="{";const k=Object.keys(o);k.forEach((key,i)=>{const v=o[key];out+=`<span class="tok-key">"${e(key)}"</span>:`+(typeof v==="boolean"?`<span class="tok-bool">${v}</span>`:`<span class="tok-str">"${e(String(v))}"</span>`);if(i<k.length-1)out+=",";});return out+"}";}
   function render(){
-    $("#filename_preview").textContent=fileName();
+    $("#filename_preview").textContent=filePath();
     $("#okurl_preview").textContent=okUrl()||"—";
-    $("#rawUrlField").hidden=!F.useRaw.checked;
-    $("#dismissTxtField").hidden=!F.dismissable.checked;
-    const o=configObj(); $("#jsonOut").innerHTML=highlight(o); $("#rawLink").textContent=rawUrl()||"—";
-    $("#pv_title").textContent=o.title||"عنوان"; $("#pv_msg").textContent=o.message||"متن پیام";
-    $("#pv_ok").textContent=o.okTxt||"عضویت"; const no=$("#pv_no"); no.textContent=o.dismissTxt||"رد"; no.style.display=o.dismissable?"":"none";
+    $("#rawUrlField").hidden=!F.useRaw.checked;$("#dismissTxtField").hidden=!F.dismissable.checked;
+    const o=configObj();$("#jsonOut").innerHTML=hl(o);$("#rawLink").textContent=rawUrl()||"—";
+    $("#pv_title").textContent=o.title||"عنوان";$("#pv_msg").textContent=o.message||"متن پیام";
+    $("#pv_ok").textContent=o.okTxt||"عضویت";const no=$("#pv_no");no.textContent=o.dismissTxt||"رد";no.style.display=o.dismissable?"":"none";
   }
   Object.values(F).forEach(el=>el.addEventListener("input",render));
-
-  function newItem(){ editingSha=null; $("#editorTitle").textContent="افزودن برنامه";
-    F.name.value="";F.title.value="";F.message.value="";F.okTxt.value="";F.tg.value="";F.useRaw.checked=false;
-    F.okUrlRaw.value="";F.dismissable.checked=false;F.dismissTxt.value="رد";F.status.checked=true; render(); }
+  function newItem(){editingSha=null;$("#editorTitle").textContent="افزودن برنامه";
+    F.name.value="";F.title.value="";F.message.value="";F.okTxt.value="";F.tg.value="";F.useRaw.checked=false;F.okUrlRaw.value="";F.dismissable.checked=false;F.dismissTxt.value="رد";F.status.checked=true;render();}
   $("#btnReset").addEventListener("click",()=>{newItem();toast("مورد جدید");});
-
-  function loadConfigIntoEditor(name,obj,sha){
-    editingSha=sha||null;
-    $("#editorTitle").textContent="ویرایش: "+name;
+  function loadConfigIntoEditor(catName,name,obj,sha){
+    editingSha=sha||null;$("#editorTitle").textContent="ویرایش: "+((catName&&catName!=="__root__")?catName+"/":"")+name;
+    F.cat.value=(catName&&catName!=="__root__")?catName:"";
     F.name.value=name.replace(/\.txt$/i,"");
-    F.title.value=obj.title||""; F.message.value=obj.message||""; F.okTxt.value=obj.okTxt||"";
-    F.status.checked=(obj.status!=="off"); F.dismissable.checked=!!obj.dismissable; F.dismissTxt.value=obj.dismissTxt||"رد";
+    F.title.value=obj.title||"";F.message.value=obj.message||"";F.okTxt.value=obj.okTxt||"";
+    F.status.checked=(obj.status!=="off");F.dismissable.checked=!!obj.dismissable;F.dismissTxt.value=obj.dismissTxt||"رد";
     const u=obj.okUrl||"";
-    if(/^tg:\/\/resolve\?domain=/.test(u)){ F.useRaw.checked=false; F.tg.value=u.replace("tg://resolve?domain=",""); F.okUrlRaw.value=""; }
-    else { F.useRaw.checked=!!u; F.okUrlRaw.value=u; F.tg.value=""; }
-    render(); switchTab("editor"); $(".content").scrollTop=0;
+    if(/^tg:\/\/resolve\?domain=/.test(u)){F.useRaw.checked=false;F.tg.value=u.replace("tg://resolve?domain=","");F.okUrlRaw.value="";}
+    else{F.useRaw.checked=!!u;F.okUrlRaw.value=u;F.tg.value="";}
+    render();switchTab("editor");$(".content").scrollTop=0;
   }
 
-  /* copy */
-  function copy(t){ try{navigator.clipboard.writeText(t).catch(()=>fb(t));}catch(e){fb(t);} }
+  function copy(t){try{navigator.clipboard.writeText(t).catch(()=>fb(t));}catch(e){fb(t);}}
   function fb(t){const a=document.createElement("textarea");a.value=t;a.style.position="fixed";a.style.opacity="0";document.body.appendChild(a);a.select();try{document.execCommand("copy");}catch(e){}document.body.removeChild(a);}
   $("#btnCopyTxt").addEventListener("click",()=>{copy(configJson());toast("JSON کپی شد");});
   $("#copyLink").addEventListener("click",()=>{const u=rawUrl();if(u){copy(u);toast("لینک کپی شد");}});
 
-  /* save to repo */
-  async function putFile(path, jsonStr, sha){
-    const api=`${GH}/repos/${CONN.owner}/${CONN.repo}/contents/${encodeURIComponent(path)}`;
-    const body={message:`update ${path} via panel`,content:b64utf8(jsonStr),branch:CONN.branch||"main"};
-    if(sha) body.sha=sha;
-    return fetch(api,{method:"PUT",headers:{...ghHeaders(),"Content-Type":"application/json"},body:JSON.stringify(body)});
+  async function putFile(path,jsonStr,sha){
+    const api=`${GH}/repos/${CONN.owner}/${CONN.repo}/contents/${path.split("/").map(encodeURIComponent).join("/")}`;
+    const body={message:`update ${path} via panel`,content:b64e(jsonStr),branch:branch()};if(sha)body.sha=sha;
+    return fetch(api,{method:"PUT",headers:{...ghH(),"Content-Type":"application/json"},body:JSON.stringify(body)});
   }
   $("#btnPush").addEventListener("click",async function(){
-    if(!hasLogin()){ note("err","اتصال برقرار نیست."); return; }
-    if(!F.name.value.trim()){ note("err","نام برنامه را وارد کن."); return; }
-    const path=fileName(); note("info","در حال ذخیره…"); this.disabled=true;
+    if(!hasLogin()){note("err","اتصال برقرار نیست.");return;}
+    if(!F.name.value.trim()){note("err","نام برنامه را وارد کن.");return;}
+    const path=filePath();note("info","در حال ذخیره…");this.disabled=true;
     try{
       let sha=editingSha;
-      if(!sha){ const g=await fetch(`${GH}/repos/${CONN.owner}/${CONN.repo}/contents/${encodeURIComponent(path)}?ref=${encodeURIComponent(CONN.branch||"main")}`,{headers:ghHeaders()});
-        if(g.status===200) sha=(await g.json()).sha; else if(g.status===401){note("err","توکن نامعتبر (۴۰۱).");this.disabled=false;return;} }
+      if(!sha){const g=await fetch(`${GH}/repos/${CONN.owner}/${CONN.repo}/contents/${path.split("/").map(encodeURIComponent).join("/")}?ref=${encodeURIComponent(branch())}`,{headers:ghH()});
+        if(g.status===200)sha=(await g.json()).sha;else if(g.status===401){note("err","توکن نامعتبر (۴۰۱).");this.disabled=false;return;}}
       const p=await putFile(path,configJson(),sha);
-      if(p.status===200||p.status===201){ const j=await p.json(); editingSha=j.content&&j.content.sha; $("#editorTitle").textContent="ویرایش: "+path; note("ok","✓ ذخیره شد. لینک: "+rawUrl()); toast("در ریپو ذخیره شد ✓"); }
-      else{ const e=await p.json().catch(()=>({}));
-        if(p.status===404) note("err","۴۰۴: دسترسی نوشتن به ریپو نداری. از منو دوباره وارد شو.");
-        else if(p.status===409||p.status===422) note("err","تعارض نسخه. «تازه‌سازی» کن و دوباره امتحان کن.");
-        else note("err","خطا ("+p.status+"): "+(e.message||"نامشخص")); }
-    }catch(err){ note("err","ارتباط برقرار نشد: "+err.message); }
+      if(p.status===200||p.status===201){const j=await p.json();editingSha=j.content&&j.content.sha;$("#editorTitle").textContent="ویرایش: "+path;note("ok","✓ ذخیره شد. لینک: "+rawUrl());toast("در ریپو ذخیره شد ✓");}
+      else{const e=await p.json().catch(()=>({}));
+        if(p.status===404)note("err","۴۰۴: دسترسی نوشتن نداری. دوباره وارد شو.");
+        else if(p.status===409||p.status===422)note("err","تعارض نسخه. «تازه‌سازی» کن و دوباره امتحان کن.");
+        else note("err","خطا ("+p.status+"): "+(e.message||"نامشخص"));}
+    }catch(err){note("err","ارتباط برقرار نشد: "+err.message);}
     this.disabled=false;
   });
 
-  /* ---------- REPO MANAGEMENT ---------- */
-  async function loadRepoFiles(){
-    if(!hasLogin()) return;
-    const box=$("#repoList"); box.innerHTML='<div class="empty"><span class="spin"></span> در حال بارگذاری…</div>';
+  /* REPO MANAGEMENT — categories = folders */
+  async function loadCategories(){
+    if(!hasLogin())return;
+    const chips=$("#catChips");chips.innerHTML='<span class="empty" style="padding:6px"><span class="spin"></span> بارگذاری دسته‌ها…</span>';
     try{
-      const r=await fetch(`${GH}/repos/${CONN.owner}/${CONN.repo}/contents?ref=${encodeURIComponent(CONN.branch||"main")}`,{headers:ghHeaders()});
-      if(!r.ok){ box.innerHTML='<div class="empty">خطا در خواندن ریپو ('+r.status+').</div>'; return; }
+      const r=await fetch(`${GH}/repos/${CONN.owner}/${CONN.repo}/contents?ref=${encodeURIComponent(branch())}`,{headers:ghH()});
+      if(!r.ok){chips.innerHTML='<span class="empty" style="padding:6px">خطا ('+r.status+')</span>';return;}
       const items=await r.json();
-      const files=items.filter(i=>i.type==="file" && /\.txt$/i.test(i.name));
-      if(!files.length){ box.innerHTML='<div class="empty">هنوز فایل کانفیگی در ریپو نیست.<br>از تب ویرایشگر یکی بساز.</div>'; return; }
-      // fetch each file content (base64 + sha)
-      const results=await Promise.all(files.map(async f=>{
-        try{ const g=await fetch(`${GH}/repos/${CONN.owner}/${CONN.repo}/contents/${encodeURIComponent(f.path)}?ref=${encodeURIComponent(CONN.branch||"main")}`,{headers:ghHeaders()});
-          const j=await g.json(); const txt=b64decodeUtf8(j.content||""); let obj={}; try{obj=JSON.parse(txt);}catch(e){}
-          return {name:f.name, path:f.path, sha:j.sha, obj, bad:!txt||Object.keys(obj).length===0}; }
-        catch(e){ return {name:f.name, path:f.path, sha:null, obj:{}, bad:true}; }
-      }));
-      renderRepoList(results);
-    }catch(e){ box.innerHTML='<div class="empty">ارتباط برقرار نشد: '+e.message+'</div>'; }
+      const dirs=items.filter(i=>i.type==="dir").map(i=>i.name);
+      const rootFiles=items.filter(i=>i.type==="file"&&/\.txt$/i.test(i.name)).length;
+      const cats=[];
+      if(rootFiles) cats.push({id:"__root__",label:"ریشه"});
+      dirs.forEach(d=>cats.push({id:d,label:d}));
+      if(!cats.length){chips.innerHTML='<span class="empty" style="padding:6px">فایلی نیست. از ویرایشگر یکی بساز (با دسته).</span>';$("#repoList").innerHTML='<div class="empty">—</div>';chips.dataset.loaded="1";return;}
+      chips.innerHTML="";
+      cats.forEach(c=>{
+        const el=document.createElement("button");el.className="chip"+(c.id===curCat?" active":"");el.textContent=c.label;
+        el.onclick=()=>{curCat=c.id;document.querySelectorAll("#catChips .chip").forEach(x=>x.classList.remove("active"));el.classList.add("active");loadCategoryFiles(c.id);};
+        chips.appendChild(el);
+      });
+      chips.dataset.loaded="1";
+      // auto-select first category
+      if(!cats.find(c=>c.id===curCat)) curCat=cats[0].id;
+      const active=[...chips.children].find(x=>x.textContent===(cats.find(c=>c.id===curCat).label));if(active)active.classList.add("active");
+      loadCategoryFiles(curCat);
+    }catch(e){chips.innerHTML='<span class="empty" style="padding:6px">ارتباط برقرار نشد</span>';}
   }
-  function renderRepoList(list){
-    const box=$("#repoList"); box.innerHTML="";
+  async function loadCategoryFiles(catId){
+    const box=$("#repoList");box.innerHTML='<div class="empty"><span class="spin"></span> در حال بارگذاری فایل‌ها…</div>';
+    const dir=catId==="__root__"?"":("/"+encodeURIComponent(catId));
+    try{
+      const r=await fetch(`${GH}/repos/${CONN.owner}/${CONN.repo}/contents${dir}?ref=${encodeURIComponent(branch())}`,{headers:ghH()});
+      if(!r.ok){box.innerHTML='<div class="empty">خطا ('+r.status+')</div>';return;}
+      const items=await r.json();
+      const files=items.filter(i=>i.type==="file"&&/\.txt$/i.test(i.name));
+      if(!files.length){box.innerHTML='<div class="empty">این دسته فایلی ندارد.</div>';curFiles=[];return;}
+      const res=await Promise.all(files.map(async f=>{
+        try{const g=await fetch(`${GH}/repos/${CONN.owner}/${CONN.repo}/contents/${f.path.split("/").map(encodeURIComponent).join("/")}?ref=${encodeURIComponent(branch())}`,{headers:ghH()});
+          const j=await g.json();const txt=b64d(j.content);let obj={};try{obj=JSON.parse(txt);}catch(e){}
+          return {cat:catId,name:f.name,path:f.path,sha:j.sha,obj,bad:!txt||!Object.keys(obj).length};}
+        catch(e){return {cat:catId,name:f.name,path:f.path,sha:null,obj:{},bad:true};}
+      }));
+      curFiles=res;renderRepoList();
+    }catch(e){box.innerHTML='<div class="empty">ارتباط برقرار نشد</div>';}
+  }
+  function renderRepoList(){
+    const box=$("#repoList");const onlyActive=$("#onlyActive").checked;
+    let list=curFiles.slice();
+    const isOn=it=>it.obj&&it.obj.status!=="off"&&!it.bad;
+    if(onlyActive)list=list.filter(isOn);
+    // active first
+    list.sort((a,b)=>(isOn(b)-isOn(a))||a.name.localeCompare(b.name));
+    if(!list.length){box.innerHTML='<div class="empty">'+(onlyActive?"دیالوگ فعالی در این دسته نیست.":"موردی نیست.")+'</div>';return;}
+    box.innerHTML="";
     list.forEach(it=>{
-      const on = it.obj && it.obj.status!=="off" && !it.bad;
-      const el=document.createElement("div"); el.className="repo-item";
-      el.innerHTML=`<button class="chk ${on?"on":""}" title="روشن/خاموش کردن دیالوگ">${on?"✓":""}</button>
+      const on=isOn(it);
+      const el=document.createElement("div");el.className="repo-item";
+      el.innerHTML=`<button class="chk ${on?"on":""}" title="روشن/خاموش">${on?"✓":""}</button>
         <div class="info"><div class="nm">${it.name.replace(/\.txt$/i,"").replace(/</g,"&lt;")}</div>
         <div class="meta">${it.bad?"فایل قابل‌خواندن نیست":(it.obj.title||"بدون عنوان")}</div></div>
         <button class="edit" title="ویرایش">✎</button>`;
       const chk=el.querySelector(".chk");
-      chk.onclick=async ()=>{ if(it.bad){toast("این فایل JSON معتبر نیست");return;}
+      chk.onclick=async()=>{if(it.bad){toast("JSON معتبر نیست");return;}
         chk.innerHTML='<span class="spin"></span>';
-        const newObj={...it.obj, status:on?"off":"ok"};
-        const p=await putFile(it.path, JSON.stringify(newObj), it.sha);
-        if(p.status===200||p.status===201){ it.obj=newObj; const j=await p.json(); it.sha=j.content&&j.content.sha;
-          const nowOn=!on; chk.className="chk "+(nowOn?"on":""); chk.innerHTML=nowOn?"✓":""; toast(nowOn?"دیالوگ روشن شد":"دیالوگ خاموش شد"); }
-        else { chk.className="chk "+(on?"on":""); chk.innerHTML=on?"✓":""; toast("خطا در تغییر وضعیت ("+p.status+")"); }
+        const nObj={...it.obj,status:on?"off":"ok"};
+        const p=await putFile(it.path,JSON.stringify(nObj),it.sha);
+        if(p.status===200||p.status===201){it.obj=nObj;const j=await p.json();it.sha=j.content&&j.content.sha;renderRepoList();toast(on?"خاموش شد":"روشن شد");}
+        else{chk.className="chk "+(on?"on":"");chk.innerHTML=on?"✓":"";toast("خطا ("+p.status+")");}
       };
-      el.querySelector(".edit").onclick=()=>{ if(it.bad){ toast("این فایل قابل ویرایش در پنل نیست"); return; } loadConfigIntoEditor(it.name,it.obj,it.sha); };
+      el.querySelector(".edit").onclick=()=>{if(it.bad){toast("قابل ویرایش نیست");return;}loadConfigIntoEditor(it.cat,it.name,it.obj,it.sha);};
       box.appendChild(el);
     });
   }
-  $("#btnRefresh").addEventListener("click",loadRepoFiles);
+  $("#onlyActive").addEventListener("change",renderRepoList);
+  $("#btnRefresh").addEventListener("click",loadCategories);
 
-  /* ---------- init ---------- */
-  if(hasLogin()) enterApp(); else $("#gate").hidden=false;
+  /* init */
+  if(hasLogin())enterApp();else $("#gate").hidden=false;
 })();
 </script>

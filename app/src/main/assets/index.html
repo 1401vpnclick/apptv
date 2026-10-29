@@ -167,6 +167,17 @@
 
   .toast{position:fixed;bottom:calc(20px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%) translateY(20px);background:var(--fg);color:var(--bg);padding:11px 20px;border-radius:30px;font-size:.84rem;font-weight:700;opacity:0;transition:.25s;z-index:60;pointer-events:none;box-shadow:0 8px 24px -8px rgba(0,0,0,.5)}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  /* help modal */
+  #helpModal{position:fixed;inset:0;z-index:70;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.55);padding:20px}
+  #helpModal .mcard{background:var(--surface);border:1px solid var(--line);border-radius:16px;max-width:460px;width:100%;max-height:82vh;overflow:auto;padding:20px}
+  #helpModal .mhead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:4px}
+  #helpModal h3{font-size:1.05rem}
+  #helpModal .x{border:1px solid var(--line);background:var(--surface-2);color:var(--muted);width:32px;height:32px;border-radius:9px;font-size:16px}
+  #helpModal .msub{color:var(--muted);font-size:.8rem;margin-bottom:14px}
+  .errrow{background:var(--surface-2);border:1px solid var(--line);border-radius:11px;padding:11px 13px;margin-bottom:9px}
+  .errrow .code{font-family:var(--mono);font-weight:800;color:var(--accent);font-size:.82rem}
+  .errrow .desc{font-size:.82rem;color:var(--fg);margin-top:4px;line-height:1.85}
 </style>
 
 <!-- GATE -->
@@ -195,6 +206,7 @@
   <button class="dbtn" id="m_manage"><span class="ic">≣</span> مدیریت ریپو</button>
   <div class="dsec">تنظیمات</div>
   <button class="dbtn" id="m_theme"><span class="ic">◐</span> تغییر تم (روشن/تاریک)</button>
+  <button class="dbtn" id="m_errors"><span class="ic">?</span> راهنمای خطاها</button>
   <div class="dsec">بیشتر</div>
   <div class="soon">بخش‌های بیشتر به‌زودی اضافه می‌شوند…</div>
   <div class="sep"></div>
@@ -294,6 +306,19 @@
   </div>
 </div>
 
+<div id="helpModal" hidden>
+  <div class="mcard">
+    <div class="mhead"><h3>راهنمای خطاها</h3><button class="x" id="helpClose" aria-label="بستن">✕</button></div>
+    <p class="msub">وقتی موقع ذخیره یا بارگذاری خطا دیدی، معنی‌اش این است:</p>
+    <div class="errrow"><div class="code">401 — توکن نامعتبر</div><div class="desc">توکن اشتباه یا باطل‌شده است. یک توکن جدید بساز و از منو «ساخت/اتصال ریپوی جدید» دوباره وارد شو.</div></div>
+    <div class="errrow"><div class="code">403 — دسترسی رد شد</div><div class="desc">توکن اجازهٔ نوشتن ندارد. موقع ساخت توکن در Permissions گزینهٔ <b>Contents</b> را روی <b>Read and write</b> بگذار.</div></div>
+    <div class="errrow"><div class="code">404 — پیدا نشد</div><div class="desc">ریپو یا فایل پیدا نشد، یا توکن به این ریپو دسترسی ندارد. اسم دقیق ریپو و دسترسی توکن را بررسی کن.</div></div>
+    <div class="errrow"><div class="code">409 / 422 — تعارض نسخه</div><div class="desc">فایل هم‌زمان جای دیگری تغییر کرده و نسخه‌ات قدیمی است. «تازه‌سازی» کن و دوباره ذخیره کن.</div></div>
+    <div class="errrow"><div class="code">429 — محدودیت نرخ</div><div class="desc">تعداد درخواست‌ها به گیت‌هاب زیاد شده. چند دقیقه صبر کن و دوباره امتحان کن.</div></div>
+    <div class="errrow"><div class="code">ارتباط برقرار نشد</div><div class="desc">مشکل اینترنت یا دسترسی به گیت‌هاب. اتصال/فیلترشکن را بررسی کن و دوباره امتحان کن.</div></div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -361,6 +386,9 @@
   $("#hambBtn").addEventListener("click",openD);
   $("#scrim").addEventListener("click",closeD);
   $("#m_theme").addEventListener("click",toggleTheme);
+  $("#m_errors").addEventListener("click",()=>{closeD();$("#helpModal").hidden=false;});
+  $("#helpClose").addEventListener("click",()=>{$("#helpModal").hidden=true;});
+  $("#helpModal").addEventListener("click",e=>{if(e.target.id==="helpModal")$("#helpModal").hidden=true;});
   $("#m_newrepo").addEventListener("click",()=>{closeD();backToGate(false);});
   $("#m_logout").addEventListener("click",()=>{closeD();backToGate(true);});
   $("#m_manage").addEventListener("click",()=>{closeD();switchTab("repo");loadCategories();});
@@ -442,7 +470,7 @@
       const items=await r.json();
       const dirs=items.filter(i=>i.type==="dir").map(i=>i.name);
       const rootFiles=items.filter(i=>i.type==="file"&&/\.txt$/i.test(i.name)).length;
-      const cats=[];
+      const cats=[{id:"__all__",label:"همه"}];
       if(rootFiles) cats.push({id:"__root__",label:"ریشه"});
       dirs.forEach(d=>cats.push({id:d,label:d}));
       if(!cats.length){chips.innerHTML='<span class="empty" style="padding:6px">فایلی نیست. از ویرایشگر یکی بساز (با دسته).</span>';$("#repoList").innerHTML='<div class="empty">—</div>';chips.dataset.loaded="1";return;}
@@ -454,25 +482,35 @@
       });
       chips.dataset.loaded="1";
       // auto-select first category
-      if(!cats.find(c=>c.id===curCat)) curCat=cats[0].id;
+      if(!cats.find(c=>c.id===curCat)) curCat=(cats.find(c=>c.id!=="__all__")||cats[0]).id;
       const active=[...chips.children].find(x=>x.textContent===(cats.find(c=>c.id===curCat).label));if(active)active.classList.add("active");
       loadCategoryFiles(curCat);
     }catch(e){chips.innerHTML='<span class="empty" style="padding:6px">ارتباط برقرار نشد</span>';}
   }
+  function rawUrlOf(path){return `https://raw.githubusercontent.com/${CONN.owner}/${CONN.repo}/refs/heads/${branch()}/${path.split("/").map(encodeURIComponent).join("/")}`;}
+  function catOfPath(p){return p.includes("/")?p.split("/").slice(0,-1).join("/"):"__root__";}
   async function loadCategoryFiles(catId){
-    const box=$("#repoList");box.innerHTML='<div class="empty"><span class="spin"></span> در حال بارگذاری فایل‌ها…</div>';
-    const dir=catId==="__root__"?"":("/"+encodeURIComponent(catId));
+    const box=$("#repoList");box.innerHTML='<div class="empty"><span class="spin"></span> در حال بارگذاری…</div>';
     try{
-      const r=await fetch(`${GH}/repos/${CONN.owner}/${CONN.repo}/contents${dir}?ref=${encodeURIComponent(branch())}`,{headers:ghH()});
-      if(!r.ok){box.innerHTML='<div class="empty">خطا ('+r.status+')</div>';return;}
-      const items=await r.json();
-      const files=items.filter(i=>i.type==="file"&&/\.txt$/i.test(i.name));
-      if(!files.length){box.innerHTML='<div class="empty">این دسته فایلی ندارد.</div>';curFiles=[];return;}
-      const res=await Promise.all(files.map(async f=>{
-        try{const g=await fetch(`${GH}/repos/${CONN.owner}/${CONN.repo}/contents/${f.path.split("/").map(encodeURIComponent).join("/")}?ref=${encodeURIComponent(branch())}`,{headers:ghH()});
-          const j=await g.json();const txt=b64d(j.content);let obj={};try{obj=JSON.parse(txt);}catch(e){}
-          return {cat:catId,name:f.name,path:f.path,sha:j.sha,obj,bad:!txt||!Object.keys(obj).length};}
-        catch(e){return {cat:catId,name:f.name,path:f.path,sha:null,obj:{},bad:true};}
+      let entries=[]; // {name, path, sha, url}
+      if(catId==="__all__"){
+        // one call for the whole tree, then fast CDN fetch of each file
+        const t=await fetch(`${GH}/repos/${CONN.owner}/${CONN.repo}/git/trees/${encodeURIComponent(branch())}?recursive=1`,{headers:ghH()});
+        if(!t.ok){box.innerHTML='<div class="empty">خطا ('+t.status+')</div>';return;}
+        const tree=(await t.json()).tree||[];
+        entries=tree.filter(x=>x.type==="blob"&&/\.txt$/i.test(x.path)).map(x=>({name:x.path.split("/").pop(),path:x.path,sha:x.sha,url:rawUrlOf(x.path)}));
+      }else{
+        const dir=catId==="__root__"?"":("/"+encodeURIComponent(catId));
+        const r=await fetch(`${GH}/repos/${CONN.owner}/${CONN.repo}/contents${dir}?ref=${encodeURIComponent(branch())}`,{headers:ghH()});
+        if(!r.ok){box.innerHTML='<div class="empty">خطا ('+r.status+')</div>';return;}
+        const items=await r.json();
+        entries=items.filter(i=>i.type==="file"&&/\.txt$/i.test(i.name)).map(i=>({name:i.name,path:i.path,sha:i.sha,url:i.download_url||rawUrlOf(i.path)}));
+      }
+      if(!entries.length){box.innerHTML='<div class="empty">فایلی نیست.</div>';curFiles=[];return;}
+      const res=await Promise.all(entries.map(async f=>{
+        try{const g=await fetch(f.url,{cache:"no-store"});const txt=g.ok?await g.text():"";let obj={};try{obj=JSON.parse(txt);}catch(e){}
+          return {cat:catOfPath(f.path),name:f.name,path:f.path,sha:f.sha,obj,bad:!txt||!Object.keys(obj).length};}
+        catch(e){return {cat:catOfPath(f.path),name:f.name,path:f.path,sha:f.sha,obj:{},bad:true};}
       }));
       curFiles=res;renderRepoList();
     }catch(e){box.innerHTML='<div class="empty">ارتباط برقرار نشد</div>';}
@@ -491,7 +529,7 @@
       const el=document.createElement("div");el.className="repo-item";
       el.innerHTML=`<button class="chk ${on?"on":""}" title="روشن/خاموش">${on?"✓":""}</button>
         <div class="info"><div class="nm">${it.name.replace(/\.txt$/i,"").replace(/</g,"&lt;")}</div>
-        <div class="meta">${it.bad?"فایل قابل‌خواندن نیست":(it.obj.title||"بدون عنوان")}</div></div>
+        <div class="meta">${(it.cat&&it.cat!=="__root__")?('<span style="color:var(--accent)">'+it.cat.replace(/</g,"&lt;")+'</span> · '):""}${it.bad?"فایل قابل‌خواندن نیست":((""+(it.obj.title||"بدون عنوان")).replace(/</g,"&lt;"))}</div></div>
         <button class="edit" title="ویرایش">✎</button>`;
       const chk=el.querySelector(".chk");
       chk.onclick=async()=>{if(it.bad){toast("JSON معتبر نیست");return;}

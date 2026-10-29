@@ -18,3 +18,21 @@ gradle assembleDebug
 ## نکات
 - خروجی فعلی **Debug APK** است (برای نصب شخصی و تست). برای انتشار نهایی، نسخهٔ Release امضاشده لازم است.
 - لوگوی پیش‌فرض اندروید استفاده شده؛ لوگوی اختصاصی بعداً اضافه می‌شود.
+
+## شمارندهٔ کلیک آفلاین (Cloudflare Workers + D1)
+کد Worker در پوشهٔ `worker/` است و با ورک‌فلوی **Deploy offline counter** خودکار روی Cloudflare می‌رود (دیتابیس D1 هم خودکار ساخته می‌شود).
+
+یک بار این ۳ Secret را در ریپو بگذار (Settings → Secrets and variables → Actions → New repository secret):
+
+| نام | مقدار |
+|---|---|
+| `CLOUDFLARE_API_TOKEN` | توکن Cloudflare با قالب «Edit Cloudflare Workers» + دسترسی **D1: Edit** |
+| `CLOUDFLARE_ACCOUNT_ID` | Account ID (داشبورد Cloudflare → Workers & Pages، ستون راست) |
+| `COUNTER_ADMIN_KEY` | یک رمز دلخواه و طولانی (برای دیدن آمار در اپ) |
+
+بعد: Actions → **Deploy offline counter** → Run workflow. آدرس Worker در خلاصهٔ همان اجرا نوشته می‌شود.
+
+- این آدرس را در dex (کلاس `OfflineDialog`، متغیر `COUNTER_URL`) بگذار.
+- در اپ «مدیریت گیت» → تب **آمار** → آدرس + همان `COUNTER_ADMIN_KEY` را وارد کن.
+
+مسیرها: `GET /hit?id=<package>` (عمومی) · `GET /stats` و `POST /reset?id=` (با کلید ادمین).

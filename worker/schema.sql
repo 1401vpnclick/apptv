@@ -1,0 +1,13 @@
+CREATE TABLE IF NOT EXISTS clicks (
+  id       TEXT PRIMARY KEY,
+  count    INTEGER NOT NULL DEFAULT 0,
+  first_at INTEGER NOT NULL,
+  last_at  INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS daily (
+  id    TEXT NOT NULL,
+  day   TEXT NOT NULL,
+  count INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (id, day)
+);

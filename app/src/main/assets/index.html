@@ -178,6 +178,23 @@
   .errrow{background:var(--surface-2);border:1px solid var(--line);border-radius:11px;padding:11px 13px;margin-bottom:9px}
   .errrow .code{font-family:var(--mono);font-weight:800;color:var(--accent);font-size:.82rem}
   .errrow .desc{font-size:.82rem;color:var(--fg);margin-top:4px;line-height:1.85}
+
+  /* stats */
+  .kpis{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;margin-bottom:12px}
+  .kpi{background:var(--surface-2);border:1px solid var(--line);border-radius:11px;padding:11px 10px;text-align:center;min-width:0}
+  .kpi .n{font-size:1.35rem;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.3}
+  .kpi .l{font-size:.7rem;color:var(--muted)}
+  .kpi.hl .n{color:var(--ok)}
+  .st-item{background:var(--surface-2);border:1px solid var(--line);border-radius:11px;padding:11px 13px;margin-bottom:9px}
+  .st-top{display:flex;align-items:center;gap:10px}
+  .st-top .nm{flex:1;min-width:0;font-weight:700;font-size:.84rem;direction:ltr;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:var(--mono)}
+  .st-top .tot{font-weight:800;font-size:1rem;font-variant-numeric:tabular-nums}
+  .st-bar{height:6px;background:var(--line);border-radius:6px;margin:8px 0 6px;overflow:hidden}
+  .st-bar i{display:block;height:100%;background:var(--accent);border-radius:6px}
+  .st-meta{display:flex;justify-content:space-between;gap:8px;font-size:.72rem;color:var(--muted)}
+  .st-meta b{color:var(--ok)}
+  .st-del{border:none;background:transparent;color:var(--muted);font-size:.72rem;padding:0;text-decoration:underline}
+  .st-del:hover{color:var(--danger)}
 </style>
 
 <!-- GATE -->
@@ -204,6 +221,7 @@
   <div class="dsec">ریپو</div>
   <button class="dbtn" id="m_newrepo"><span class="ic">＋</span> ساخت / اتصال ریپوی جدید</button>
   <button class="dbtn" id="m_manage"><span class="ic">≣</span> مدیریت ریپو</button>
+  <button class="dbtn" id="m_stats"><span class="ic">▤</span> آمار کلیک آفلاین</button>
   <div class="dsec">تنظیمات</div>
   <button class="dbtn" id="m_theme"><span class="ic">◐</span> تغییر تم (روشن/تاریک)</button>
   <button class="dbtn" id="m_errors"><span class="ic">?</span> راهنمای خطاها</button>
@@ -222,6 +240,7 @@
   <div class="tabs">
     <button class="tab active" data-tab="editor">✎ ویرایشگر</button>
     <button class="tab" data-tab="repo">≣ مدیریت ریپو</button>
+    <button class="tab" data-tab="stats">▤ آمار</button>
   </div>
 
   <div class="content">
@@ -301,6 +320,32 @@
           <button class="btn flex" id="btnRefresh">↻ تازه‌سازی</button>
         </div>
         <div id="repoList"><div class="empty">یک دسته انتخاب کن.</div></div>
+      </div>
+    </div>
+
+    <!-- OFFLINE CLICK STATS -->
+    <div class="view" id="view-stats" hidden>
+      <div class="card">
+        <h2><span class="ic">▤</span> آمار کلیک‌های آفلاین</h2>
+        <p class="sub">تعداد زدن دکمهٔ «عضویت» در دیالوگ آفلاین، به تفکیک برنامه (اسم پکیج).</p>
+        <div class="kpis">
+          <div class="kpi"><div class="n" id="k_total">—</div><div class="l">کل کلیک‌ها</div></div>
+          <div class="kpi hl"><div class="n" id="k_today">—</div><div class="l">امروز</div></div>
+          <div class="kpi"><div class="n" id="k_apps">—</div><div class="l">برنامه</div></div>
+        </div>
+        <div class="btns" style="margin-bottom:12px"><button class="btn flex" id="btnStats">↻ تازه‌سازی آمار</button></div>
+        <div id="statsList"><div class="empty">آدرس Worker و کلید را در بخش پایین وارد کن، بعد «تازه‌سازی» را بزن.</div></div>
+      </div>
+      <div class="card">
+        <h2><span class="ic">⚙</span> اتصال شمارنده (Cloudflare)</h2>
+        <p class="sub">فقط روی همین دستگاه ذخیره می‌شود.</p>
+        <div class="field"><label>آدرس Worker</label>
+          <input type="text" id="c_url" placeholder="https://offline-counter.xxx.workers.dev" autocomplete="off" autocapitalize="none" spellcheck="false" style="direction:ltr;text-align:left"></div>
+        <div class="field"><label>کلید ادمین (COUNTER_ADMIN_KEY)</label>
+          <input type="password" id="c_key" placeholder="همان کلیدی که در Secrets گیت‌هاب گذاشتی" autocomplete="off"></div>
+        <div class="btns"><button class="btn primary flex" id="btnCSave">ذخیره و بررسی</button></div>
+        <p class="hint">همین آدرس را در dex، در متغیر <code>COUNTER_URL</code> کلاس <code>OfflineDialog</code> بگذار (بدون / در آخر).</p>
+        <div class="status-note" id="cNote"></div>
       </div>
     </div>
   </div>
@@ -392,11 +437,14 @@
   $("#m_newrepo").addEventListener("click",()=>{closeD();backToGate(false);});
   $("#m_logout").addEventListener("click",()=>{closeD();backToGate(true);});
   $("#m_manage").addEventListener("click",()=>{closeD();switchTab("repo");loadCategories();});
+  $("#m_stats").addEventListener("click",()=>{closeD();switchTab("stats");loadStats();});
   function switchTab(name){
     document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("active",t.dataset.tab===name));
-    $("#view-editor").hidden=name!=="editor";$("#view-repo").hidden=name!=="repo";$(".content").scrollTop=0;
+    $("#view-editor").hidden=name!=="editor";$("#view-repo").hidden=name!=="repo";$("#view-stats").hidden=name!=="stats";$(".content").scrollTop=0;
   }
-  document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{switchTab(t.dataset.tab);if(t.dataset.tab==="repo"&&!$("#catChips").dataset.loaded)loadCategories();}));
+  document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{switchTab(t.dataset.tab);
+    if(t.dataset.tab==="repo"&&!$("#catChips").dataset.loaded)loadCategories();
+    if(t.dataset.tab==="stats"&&!$("#statsList").dataset.loaded)loadStats();}));
 
   /* EDITOR */
   const F={cat:$("#f_cat"),name:$("#app_name"),title:$("#f_title"),message:$("#f_message"),okTxt:$("#f_okTxt"),tg:$("#f_tg"),useRaw:$("#f_useRaw"),okUrlRaw:$("#f_okUrlRaw"),dismissable:$("#f_dismissable"),dismissTxt:$("#f_dismissTxt"),status:$("#f_status")};
@@ -545,6 +593,56 @@
   }
   $("#onlyActive").addEventListener("change",renderRepoList);
   $("#btnRefresh").addEventListener("click",loadCategories);
+
+  /* OFFLINE CLICK STATS (Cloudflare Worker + D1) */
+  const LS_CNT="vpnclick_counter";
+  let CNT=(function(){try{return JSON.parse(localStorage.getItem(LS_CNT))||{};}catch(e){return {};}})();
+  $("#c_url").value=CNT.url||"";$("#c_key").value=CNT.key||"";
+  function cnote(t,m){const n=$("#cNote");n.className="status-note show "+t;n.textContent=m;}
+  const esc=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  const fa=n=>Number(n||0).toLocaleString("fa-IR");
+  function ago(ms){if(!ms)return "—";const m=Math.floor((Date.now()-ms)/60000);
+    if(m<1)return "همین الان";if(m<60)return fa(m)+" دقیقه پیش";const h=Math.floor(m/60);if(h<24)return fa(h)+" ساعت پیش";return fa(Math.floor(h/24))+" روز پیش";}
+  async function cfetch(path,opt){
+    return fetch(CNT.url+path,{...(opt||{}),headers:{Authorization:"Bearer "+CNT.key},cache:"no-store"});
+  }
+  async function loadStats(){
+    const box=$("#statsList");
+    if(!CNT.url||!CNT.key){box.innerHTML='<div class="empty">آدرس Worker و کلید را در بخش پایین وارد کن.</div>';return;}
+    box.innerHTML='<div class="empty"><span class="spin"></span> در حال بارگذاری…</div>';
+    try{
+      const r=await cfetch("/stats");
+      if(r.status===401){box.innerHTML='<div class="empty">کلید ادمین اشتباه است (۴۰۱).</div>';return;}
+      if(!r.ok){box.innerHTML='<div class="empty">خطا ('+r.status+')</div>';return;}
+      const j=await r.json();box.dataset.loaded="1";
+      $("#k_total").textContent=fa(j.total);$("#k_today").textContent=fa(j.today);$("#k_apps").textContent=fa(j.apps.length);
+      if(!j.apps.length){box.innerHTML='<div class="empty">هنوز کلیکی ثبت نشده.</div>';return;}
+      const max=Math.max(...j.apps.map(a=>a.total),1);box.innerHTML="";
+      j.apps.forEach(a=>{
+        const el=document.createElement("div");el.className="st-item";
+        el.innerHTML=`<div class="st-top"><div class="nm">${esc(a.id)}</div><div class="tot">${fa(a.total)}</div></div>
+          <div class="st-bar"><i style="width:${Math.max(3,Math.round(a.total/max*100))}%"></i></div>
+          <div class="st-meta"><span>امروز: <b>${fa(a.today)}</b> · آخرین: ${ago(a.last_at)}</span><button class="st-del">صفر کردن</button></div>`;
+        el.querySelector(".st-del").onclick=async()=>{
+          if(!confirm("آمار «"+a.id+"» صفر شود؟"))return;
+          const p=await cfetch("/reset?id="+encodeURIComponent(a.id),{method:"POST"}).catch(()=>null);
+          if(p&&p.ok){toast("صفر شد");loadStats();}else toast("خطا");
+        };
+        box.appendChild(el);
+      });
+    }catch(e){box.innerHTML='<div class="empty">ارتباط با Worker برقرار نشد.</div>';}
+  }
+  $("#btnStats").addEventListener("click",loadStats);
+  $("#btnCSave").addEventListener("click",async()=>{
+    const url=$("#c_url").value.trim().replace(/\/+$/,"");const key=$("#c_key").value.trim();
+    if(!/^https:\/\//.test(url)||!key){cnote("err","آدرس (با https://) و کلید را وارد کن.");return;}
+    CNT={url,key};lsSet(LS_CNT,CNT);cnote("info","در حال بررسی…");
+    try{const r=await cfetch("/stats");
+      if(r.ok){cnote("ok","اتصال برقرار شد ✓");loadStats();}
+      else if(r.status===401)cnote("err","کلید ادمین اشتباه است.");
+      else cnote("err","خطا ("+r.status+") — آدرس Worker را بررسی کن.");
+    }catch(e){cnote("err","ارتباط برقرار نشد — آدرس را بررسی کن.");}
+  });
 
   /* init */
   if(hasLogin())enterApp();else $("#gate").hidden=false;

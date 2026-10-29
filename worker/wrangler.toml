@@ -1,0 +1,10 @@
+name = "offline-counter"
+main = "src/index.js"
+compatibility_date = "2024-09-23"
+workers_dev = true
+
+[[d1_databases]]
+binding = "DB"
+database_name = "offline-counter"
+# filled automatically by the GitHub Actions deploy workflow
+database_id = "__D1_ID__"

@@ -1,0 +1,74 @@
+name: Deploy offline counter (Cloudflare)
+
+on:
+  push:
+    paths:
+      - 'worker/**'
+      - '.github/workflows/worker.yml'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      ADMIN_KEY: ${{ secrets.COUNTER_ADMIN_KEY }}
+    defaults:
+      run:
+        working-directory: worker
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Check secrets
+        id: chk
+        run: |
+          miss=""
+          [ -z "$CLOUDFLARE_API_TOKEN" ] && miss="$miss CLOUDFLARE_API_TOKEN"
+          [ -z "$CLOUDFLARE_ACCOUNT_ID" ] && miss="$miss CLOUDFLARE_ACCOUNT_ID"
+          [ -z "$ADMIN_KEY" ] && miss="$miss COUNTER_ADMIN_KEY"
+          if [ -n "$miss" ]; then
+            echo "::warning::Skipped deploy — missing repo secrets:$miss  (Settings → Secrets and variables → Actions)"
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install wrangler
+        if: steps.chk.outputs.ready == 'true'
+        run: npm i -g wrangler@3
+
+      - name: Create D1 database if needed and fill its id
+        if: steps.chk.outputs.ready == 'true'
+        run: |
+          ID=$(wrangler d1 list --json | jq -r '.[] | select(.name=="offline-counter") | .uuid')
+          if [ -z "$ID" ]; then
+            wrangler d1 create offline-counter
+            ID=$(wrangler d1 list --json | jq -r '.[] | select(.name=="offline-counter") | .uuid')
+          fi
+          [ -n "$ID" ] || { echo "::error::could not get D1 id"; exit 1; }
+          echo "D1 id: $ID"
+          sed -i "s/__D1_ID__/$ID/" wrangler.toml
+
+      - name: Create tables
+        if: steps.chk.outputs.ready == 'true'
+        run: wrangler d1 execute offline-counter --remote --file schema.sql
+
+      - name: Deploy worker
+        if: steps.chk.outputs.ready == 'true'
+        run: |
+          wrangler deploy | tee deploy.log
+          URL=$(grep -oE 'https://[a-zA-Z0-9.-]+\.workers\.dev' deploy.log | head -1)
+          echo "### ✅ Worker deployed" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "آدرس Worker (برای COUNTER_URL در dex و تب آمار در اپ):" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "\`$URL\`" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Set admin key secret
+        if: steps.chk.outputs.ready == 'true'
+        run: printf '%s' "$ADMIN_KEY" | wrangler secret put ADMIN_KEY

@@ -1,0 +1,63 @@
+name: Dialog dex (tested)
+
+on:
+  push:
+    paths:
+      - 'dialog/**'
+      - '.github/workflows/dialog.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Run Robolectric tests
+        run: |
+          cd dialog
+          chmod +x gradlew
+          ./gradlew :lib:testDebugUnitTest --stacktrace --no-daemon
+
+      - name: Build library
+        run: |
+          cd dialog
+          ./gradlew :lib:assembleRelease --no-daemon
+
+      - name: Produce classes.dex with d8
+        run: |
+          cd dialog
+          AAR=$(find lib/build/outputs/aar -name '*.aar' | head -1)
+          echo "AAR = $AAR"
+          rm -rf dexout && mkdir -p dexout
+          (cd dexout && unzip -o "../$AAR" classes.jar)
+          BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+          echo "build-tools = $BT"
+          "$BT/d8" --min-api 21 --output dexout dexout/classes.jar
+          mv dexout/classes.dex dexout/server.dex
+          ls -l dexout
+
+      - name: Upload server.dex
+        uses: actions/upload-artifact@v4
+        with:
+          name: server-dex
+          path: dialog/dexout/server.dex
+          if-no-files-found: error
+
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-report
+          path: dialog/lib/build/reports/tests/
+          if-no-files-found: ignore

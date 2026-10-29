@@ -1,5 +1,5 @@
 <meta name="claude:viewport-fit-sides" content="cover">
-<title>پنل دیالوگ VPN Click</title>
+<title>مدیریت گیت</title>
 <style>
   /* Single-screen app shell: fixed top bar + tab strip + one scrolling content area.
      Dark-first — deep slate surfaces, telegram-blue accent, green "on" status. */
@@ -27,6 +27,8 @@
   }
 
   *{box-sizing:border-box}
+  [hidden]{display:none!important}
+  img{max-width:100%}
   html,body{height:100%}
   body{background:var(--bg);color:var(--fg);font-family:var(--ui);direction:rtl;line-height:1.7;margin:0;overflow:hidden}
   h1,h2,h3{margin:0;text-wrap:balance;font-weight:700}
@@ -185,8 +187,8 @@
 <!-- ============ LOGIN GATE ============ -->
 <div id="gate">
   <div class="gate-card">
-    <div class="gate-logo">VC</div>
-    <h1>ورود به پنل</h1>
+    <div class="gate-logo">گ</div>
+    <h1>ورود به مدیریت گیت</h1>
     <p class="tag">ریپو و توکن را وارد کن؛ یوزرنیم خودکار از توکن خوانده می‌شود.</p>
     <div class="field"><label>نام ریپازیتوری</label>
       <input type="text" id="g_repo" placeholder="pvtest1-" autocomplete="off" autocapitalize="none" spellcheck="false"></div>
@@ -201,7 +203,7 @@
 <!-- ============ DRAWER ============ -->
 <div id="scrim"></div>
 <nav id="drawer" aria-label="منو">
-  <div class="dhead"><div class="l">VC</div><h3>منو</h3></div>
+  <div class="dhead"><div class="l">گ</div><h3>منو</h3></div>
   <div class="conn"><div class="k">متصل به ریپو</div><div class="v" id="d_repo">—</div></div>
   <div class="dsec">ریپو</div>
   <button class="dbtn" id="m_newrepo"><span class="ic">＋</span> ساخت / اتصال ریپوی جدید</button>
@@ -219,7 +221,7 @@
   <div class="topbar">
     <button class="hamb" id="hambBtn" aria-label="منو"><span></span></button>
     <div class="tb-title">
-      <h1>پنل دیالوگ</h1>
+      <h1>مدیریت گیت</h1>
       <p>متصل به <span class="who" id="whoami">—</span></p>
     </div>
   </div>

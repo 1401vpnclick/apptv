@@ -144,6 +144,9 @@
   .repo-item .meta{font-size:.72rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .repo-item .edit{flex:none;width:32px;height:32px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--muted);display:grid;place-items:center}
   .repo-item .edit:hover{color:var(--accent);border-color:var(--accent)}
+  .repo-item .del{flex:none;width:32px;height:32px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--muted);display:grid;place-items:center}
+  .repo-item .del:hover{color:var(--danger);border-color:var(--danger)}
+  .hamb.spinning{animation:sp .7s linear infinite}
   .empty{color:var(--muted);font-size:.82rem;text-align:center;padding:26px 10px;line-height:1.9}
   .spin{display:inline-block;width:16px;height:16px;border:2px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:sp .7s linear infinite;vertical-align:-3px}
   @keyframes sp{to{transform:rotate(360deg)}}
@@ -236,6 +239,7 @@
   <div class="topbar">
     <button class="hamb" id="hambBtn" aria-label="منو"><span></span></button>
     <div class="tb-title"><h1>مدیریت گیت</h1><p>متصل به <span class="who" id="whoami">—</span></p></div>
+    <button class="hamb" id="refreshBtn" aria-label="تازه‌سازی" title="تازه‌سازی" style="margin-inline-start:auto;font-size:20px;line-height:1">↻</button>
   </div>
   <div class="tabs">
     <button class="tab active" data-tab="editor">✎ ویرایشگر</button>
@@ -444,6 +448,13 @@
   const openD=()=>{$("#drawer").classList.add("show");$("#scrim").classList.add("show");};
   const closeD=()=>{$("#drawer").classList.remove("show");$("#scrim").classList.remove("show");};
   $("#hambBtn").addEventListener("click",openD);
+  $("#refreshBtn").addEventListener("click",function(){
+    const t=document.querySelector(".tab.active");const active=t?t.dataset.tab:"editor";
+    this.classList.add("spinning");const done=()=>this.classList.remove("spinning");
+    if(active==="repo")Promise.resolve(loadCategories()).finally(done);
+    else if(active==="stats")Promise.resolve(loadStats()).finally(done);
+    else{render();done();toast("به‌روز شد");}
+  });
   $("#scrim").addEventListener("click",closeD);
   $("#m_theme").addEventListener("click",toggleTheme);
   $("#m_errors").addEventListener("click",()=>{closeD();$("#helpModal").hidden=false;});
@@ -504,6 +515,29 @@
     const api=`${GH}/repos/${CONN.owner}/${CONN.repo}/contents/${path.split("/").map(encodeURIComponent).join("/")}`;
     const body={message:`update ${path} via panel`,content:b64e(jsonStr),branch:branch()};if(sha)body.sha=sha;
     return fetch(api,{method:"PUT",headers:{...ghH(),"Content-Type":"application/json"},body:JSON.stringify(body)});
+  }
+  // fresh content by blob sha — avoids the stale raw-CDN that made toggles revert
+  async function readFileText(sha){
+    try{const r=await fetch(`${GH}/repos/${CONN.owner}/${CONN.repo}/git/blobs/${sha}`,{headers:ghH(),cache:"no-store"});
+      if(!r.ok)return "";const j=await r.json();return j.encoding==="base64"?b64d(j.content):(j.content||"");}
+    catch(e){return "";}
+  }
+  async function currentSha(path){
+    try{const g=await fetch(`${GH}/repos/${CONN.owner}/${CONN.repo}/contents/${path.split("/").map(encodeURIComponent).join("/")}?ref=${encodeURIComponent(branch())}`,{headers:ghH()});
+      if(g.status===200)return (await g.json()).sha;}catch(e){}
+    return null;
+  }
+  async function deleteFile(path,sha){
+    const api=`${GH}/repos/${CONN.owner}/${CONN.repo}/contents/${path.split("/").map(encodeURIComponent).join("/")}`;
+    const body={message:`delete ${path} via panel`,sha,branch:branch()};
+    return fetch(api,{method:"DELETE",headers:{...ghH(),"Content-Type":"application/json"},body:JSON.stringify(body)});
+  }
+  // security gate for deletes: verify the admin key against the Worker, else fall back to the saved key
+  async function verifyAdminKey(key){
+    if(!key)return false;
+    if(CNT&&CNT.url){try{const r=await fetch(CNT.url.replace(/\/+$/,"")+"/stats",{headers:{Authorization:"Bearer "+key},cache:"no-store"});return r.ok;}catch(e){return false;}}
+    if(CNT&&CNT.key)return key===CNT.key;
+    return null; // admin key not configured yet
   }
   $("#btnPush").addEventListener("click",async function(){
     if(!hasLogin()){note("err","اتصال برقرار نیست.");return;}
@@ -578,9 +612,8 @@
       }
       if(!entries.length){box.innerHTML='<div class="empty">فایلی نیست.</div>';curFiles=[];return;}
       const res=await Promise.all(entries.map(async f=>{
-        try{const g=await fetch(f.url,{cache:"no-store"});const txt=g.ok?await g.text():"";let obj={};try{obj=JSON.parse(txt);}catch(e){}
-          return {cat:catOfPath(f.path),name:f.name,path:f.path,sha:f.sha,obj,bad:!txt||!Object.keys(obj).length};}
-        catch(e){return {cat:catOfPath(f.path),name:f.name,path:f.path,sha:f.sha,obj:{},bad:true};}
+        const txt=await readFileText(f.sha);let obj={};try{obj=JSON.parse(txt);}catch(e){}
+        return {cat:catOfPath(f.path),name:f.name,path:f.path,sha:f.sha,obj,bad:!txt||!Object.keys(obj).length};
       }));
       curFiles=res;renderRepoList();
     }catch(e){box.innerHTML='<div class="empty">ارتباط برقرار نشد</div>';}
@@ -600,7 +633,8 @@
       el.innerHTML=`<button class="chk ${on?"on":""}" title="روشن/خاموش">${on?"✓":""}</button>
         <div class="info"><div class="nm">${it.name.replace(/\.txt$/i,"").replace(/</g,"&lt;")}</div>
         <div class="meta">${(it.cat&&it.cat!=="__root__")?('<span style="color:var(--accent)">'+it.cat.replace(/</g,"&lt;")+'</span> · '):""}${it.bad?"فایل قابل‌خواندن نیست":((""+(it.obj.title||"بدون عنوان")).replace(/</g,"&lt;"))}</div></div>
-        <button class="edit" title="ویرایش">✎</button>`;
+        <button class="edit" title="ویرایش">✎</button>
+        <button class="del" title="حذف">🗑</button>`;
       const chk=el.querySelector(".chk");
       chk.onclick=async()=>{if(it.bad){toast("JSON معتبر نیست");return;}
         chk.innerHTML='<span class="spin"></span>';
@@ -610,6 +644,20 @@
         else{chk.className="chk "+(on?"on":"");chk.innerHTML=on?"✓":"";toast("خطا ("+p.status+")");}
       };
       el.querySelector(".edit").onclick=()=>{if(it.bad){toast("قابل ویرایش نیست");return;}loadConfigIntoEditor(it.cat,it.name,it.obj,it.sha);};
+      el.querySelector(".del").onclick=async()=>{
+        const nm=it.name.replace(/\.txt$/i,"");
+        if(!confirm("حذف کامل «"+nm+"»؟ این مورد برای همیشه از ریپو پاک می‌شود."))return;
+        const key=prompt("برای حذف، کلید امنیتی (کلید ادمین) را وارد کن:");
+        if(key===null)return;
+        const ok=await verifyAdminKey(key.trim());
+        if(ok===null){toast("اول کلید ادمین را در تب «آمار» وارد و ذخیره کن");return;}
+        if(!ok){toast("کلید امنیتی اشتباه است");return;}
+        const delBtn=el.querySelector(".del");delBtn.innerHTML='<span class="spin"></span>';
+        const sha=await currentSha(it.path)||it.sha;
+        const p=await deleteFile(it.path,sha);
+        if(p.status===200){curFiles=curFiles.filter(x=>x.path!==it.path);renderRepoList();toast("«"+nm+"» حذف شد ✓");}
+        else{delBtn.innerHTML="🗑";toast("خطا در حذف ("+p.status+")");}
+      };
       box.appendChild(el);
     });
   }

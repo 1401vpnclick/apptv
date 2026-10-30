@@ -2,6 +2,10 @@ plugins {
     id 'com.android.application'
 }
 
+def verProps = new Properties()
+def verFile = rootProject.file('version.properties')
+if (verFile.exists()) { verFile.withInputStream { verProps.load(it) } }
+
 android {
     namespace 'com.checkapp.panel'
     compileSdk 34
@@ -10,8 +14,8 @@ android {
         applicationId 'com.checkapp.panel'
         minSdk 21
         targetSdk 34
-        versionCode 1
-        versionName '1.0'
+        versionCode (verProps.getProperty('VERSION_CODE', '1')).toInteger()
+        versionName verProps.getProperty('VERSION_NAME', '1.0')
     }
 
     buildTypes {

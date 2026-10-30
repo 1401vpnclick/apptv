@@ -1,4 +1,4 @@
-package com.sing.check;
+package androidx.core.app;
 
 import static org.junit.Assert.*;
 
@@ -14,7 +14,7 @@ import org.robolectric.annotation.Config;
 
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 28)
-public class DialogTest {
+public class ViewTest {
 
     private Activity activity() {
         return Robolectric.buildActivity(Activity.class).setup().get();
@@ -22,12 +22,12 @@ public class DialogTest {
 
     @Before
     public void reset() {
-        WebService.joined = false;
+        AppCompatInit.joined = false;
     }
 
     @Test
     public void forced_showsOnlyJoinButton() {
-        CustomDialogClass d = new CustomDialogClass(activity(), "عنوان", "پیام",
+        AppCompatView d = new AppCompatView(activity(), "عنوان", "پیام",
                 false, "رد", "عضویت", "https://t.me/x");
         d.show();
         assertTrue("dialog must be showing", d.isShowing());
@@ -39,7 +39,7 @@ public class DialogTest {
 
     @Test
     public void optional_showsBothButtons() {
-        CustomDialogClass d = new CustomDialogClass(activity(), "عنوان", "پیام",
+        AppCompatView d = new AppCompatView(activity(), "عنوان", "پیام",
                 true, "رد", "عضویت", "https://t.me/x");
         d.show();
         assertNotNull(d.positiveButton);
@@ -51,27 +51,27 @@ public class DialogTest {
 
     @Test
     public void tappingJoin_setsSessionFlag() {
-        CustomDialogClass d = new CustomDialogClass(activity(), "t", "m",
+        AppCompatView d = new AppCompatView(activity(), "t", "m",
                 false, "رد", "عضویت", "https://t.me/x");
         d.show();
-        assertFalse(WebService.joined);
+        assertFalse(AppCompatInit.joined);
         d.positiveButton.performClick();
-        assertTrue("joined flag set after tapping join", WebService.joined);
+        assertTrue("joined flag set after tapping join", AppCompatInit.joined);
     }
 
     @Test
     public void showOnce_afterJoin_bothModes() {
-        assertTrue(WebService.shouldShow(false));
-        assertTrue(WebService.shouldShow(true));
-        WebService.joined = true; // user joined this session
-        assertFalse(WebService.shouldShow(false));
+        assertTrue(AppCompatInit.shouldShow(false));
+        assertTrue(AppCompatInit.shouldShow(true));
+        AppCompatInit.joined = true; // user joined this session
+        assertFalse(AppCompatInit.shouldShow(false));
         assertFalse("optional dialog also stops this session after joining",
-                WebService.shouldShow(true));
+                AppCompatInit.shouldShow(true));
     }
 
     @Test
     public void tappingJoin_dismissesDialog_optionalMode() {
-        CustomDialogClass d = new CustomDialogClass(activity(), "t", "m",
+        AppCompatView d = new AppCompatView(activity(), "t", "m",
                 true, "رد", "عضویت", "https://t.me/x");
         d.show();
         assertTrue(d.isShowing());
@@ -81,7 +81,7 @@ public class DialogTest {
 
     @Test
     public void tappingDismiss_closesDialog() {
-        CustomDialogClass d = new CustomDialogClass(activity(), "t", "m",
+        AppCompatView d = new AppCompatView(activity(), "t", "m",
                 true, "رد", "عضویت", "https://t.me/x");
         d.show();
         d.negativeButton.performClick();
@@ -89,12 +89,12 @@ public class DialogTest {
     }
 
     @Test
-    public void setTypeeee_safeWithoutFontAsset() {
-        CustomDialogClass d = new CustomDialogClass(activity(), "t", "m",
+    public void applyFont_safeWithoutFontAsset() {
+        AppCompatView d = new AppCompatView(activity(), "t", "m",
                 false, "رد", "عضویت", "https://t.me/x");
         d.show();
-        d.setTypeeee(); // must not throw when the font asset is missing
-        assertEquals("button still visible after setTypeeee",
+        d.applyFont(); // must not throw when the font asset is missing
+        assertEquals("button still visible after applyFont",
                 View.VISIBLE, d.positiveButton.getVisibility());
     }
 }

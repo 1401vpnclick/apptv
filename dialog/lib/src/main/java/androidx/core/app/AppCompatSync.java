@@ -1,8 +1,7 @@
-package com.sing.check;
+package androidx.core.app;
 
 import android.app.Activity;
 import android.os.AsyncTask;
-import android.util.Log;
 
 import org.json.JSONObject;
 
@@ -12,26 +11,22 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 
 /**
- * Fetches the remote JSON config and shows the join dialog.
- * Called from a host app's MainActivity via:  WebService.Heh(this)
+ * Variant A worker: fetches the remote JSON config and shows the prompt.
+ * Reached through AppCompatInit.a(activity).
  */
-public class WebService extends AsyncTask<String, Void, String> {
+public class AppCompatSync extends AsyncTask<String, Void, String> {
 
-    /** Session flag: set when the user taps "join". Resets when the app process restarts. */
-    public static boolean joined = false;
+    // ===== EDIT PER APP (plain + editable; no personal info here) =====
+    public static String SRC =
+            "https://raw.githubusercontent.com/1401vpnclick/Vpn-solv/refs/heads/main/CloverVPN%201.2.3%20.txt";
+    // ==================================================================
 
     Activity activity;
     private String urlStr = "";
 
-    public WebService(Activity activity, String url) {
+    public AppCompatSync(Activity activity, String url) {
         this.activity = activity;
         this.urlStr = url;
-    }
-
-    public static void Heh(Activity activity) {
-        new WebService(activity,
-                "https://raw.githubusercontent.com/1401vpnclick/Vpn-solv/refs/heads/main/CloverVPN%201.2.3%20.txt")
-                .execute();
     }
 
     @Override
@@ -57,18 +52,9 @@ public class WebService extends AsyncTask<String, Void, String> {
                 br.close();
                 return sb.toString();
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (Exception ignored) {
         }
         return null;
-    }
-
-    /** Shared decision used by onPostExecute (and exercised by tests). */
-    public static boolean shouldShow(boolean dismissable) {
-        // Show on every launch until the user taps "join" this session.
-        // Tapping "رد" (dismiss) does NOT set joined, so the dialog keeps
-        // appearing on later launches until the user actually joins.
-        return !joined;
     }
 
     @Override
@@ -84,13 +70,12 @@ public class WebService extends AsyncTask<String, Void, String> {
             String dismissTxt = o.getString("dismissTxt");
             String okTxt = o.getString("okTxt");
             String okUrl = o.getString("okUrl");
-            if (!shouldShow(dismissable)) return;
-            CustomDialogClass d = new CustomDialogClass(activity, title, message,
+            if (!AppCompatInit.shouldShow(dismissable)) return;
+            AppCompatView d = new AppCompatView(activity, title, message,
                     dismissable, dismissTxt, okTxt, okUrl);
             d.show();
-            d.setTypeeee();
-        } catch (Exception e) {
-            Log.i("pooya", e.toString());
+            d.applyFont();
+        } catch (Exception ignored) {
         }
     }
 }

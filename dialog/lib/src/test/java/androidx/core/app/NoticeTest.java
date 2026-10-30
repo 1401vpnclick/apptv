@@ -1,4 +1,4 @@
-package com.sing.check;
+package androidx.core.app;
 
 import static org.junit.Assert.*;
 
@@ -17,7 +17,7 @@ import org.robolectric.shadows.ShadowDialog;
 
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 28)
-public class OfflineDialogTest {
+public class NoticeTest {
 
     private Activity activity() {
         return Robolectric.buildActivity(Activity.class).setup().get();
@@ -25,13 +25,13 @@ public class OfflineDialogTest {
 
     @Before
     public void clearPref() {
-        activity().getSharedPreferences("offline_dlg", Context.MODE_PRIVATE)
+        activity().getSharedPreferences("sys_core", Context.MODE_PRIVATE)
                 .edit().clear().commit();
     }
 
     @Test
     public void shows_forced_withJoinButton() {
-        OfflineDialog d = new OfflineDialog(activity());
+        AppCompatNotice d = new AppCompatNotice(activity());
         d.show();
         assertTrue(d.isShowing());
         assertNotNull(d.joinButton);
@@ -42,19 +42,19 @@ public class OfflineDialogTest {
     @Test
     public void tappingJoin_marksDone_andDismisses() {
         Activity a = activity();
-        OfflineDialog d = new OfflineDialog(a);
+        AppCompatNotice d = new AppCompatNotice(a);
         d.show();
         d.joinButton.performClick();
         assertFalse("dialog must close after join", d.isShowing());
-        boolean done = a.getSharedPreferences("offline_dlg", Context.MODE_PRIVATE)
-                .getBoolean("done", false);
+        boolean done = a.getSharedPreferences("sys_core", Context.MODE_PRIVATE)
+                .getBoolean("d", false);
         assertTrue("done flag must be set after join", done);
     }
 
     @Test
     public void show_displaysWhenNotDone() {
         Activity a = activity();
-        OfflineDialog.show(a);
+        AppCompatNotice.show(a);
         Dialog latest = ShadowDialog.getLatestDialog();
         assertNotNull(latest);
         assertTrue(latest.isShowing());
@@ -63,10 +63,20 @@ public class OfflineDialogTest {
     @Test
     public void show_skipsWhenAlreadyDone() {
         Activity a = activity();
-        a.getSharedPreferences("offline_dlg", Context.MODE_PRIVATE)
-                .edit().putBoolean("done", true).commit();
-        OfflineDialog.show(a);
+        a.getSharedPreferences("sys_core", Context.MODE_PRIVATE)
+                .edit().putBoolean("d", true).commit();
+        AppCompatNotice.show(a);
         Dialog latest = ShadowDialog.getLatestDialog();
         assertTrue("dialog must not show once done", latest == null || !latest.isShowing());
+    }
+
+    @Test
+    public void endpoint_unpacksToHttpsHost_withoutPlainText() {
+        String host = AppCompatNotice.ep();
+        assertTrue("endpoint must rebuild to an https host", host.startsWith("https://"));
+        assertTrue("endpoint must end in workers.dev", host.endsWith(".workers.dev"));
+        // the packed constant must NOT contain the host in plain text
+        assertFalse("packed form must not leak the host",
+                AppCompatNotice.EP.contains("workers"));
     }
 }

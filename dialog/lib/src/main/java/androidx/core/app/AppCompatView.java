@@ -1,4 +1,4 @@
-package com.sing.check;
+package androidx.core.app;
 
 import android.app.Activity;
 import android.app.Dialog;
@@ -19,11 +19,11 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 /**
- * Custom join dialog: rounded white card, centered bold title + message,
- * full-width rounded blue "join" button, and an optional "dismiss" button.
- * Appearance is built in code, so it never depends on an external font asset.
+ * Rounded card prompt: centered bold title + message, full-width accent
+ * primary button and an optional secondary button. Built entirely in code,
+ * so it never depends on an external font or layout asset.
  */
-public class CustomDialogClass extends Dialog {
+public class AppCompatView extends Dialog {
 
     public Activity c;
     private final String title, message, dismissTxt, okTxt, okUrl;
@@ -33,8 +33,8 @@ public class CustomDialogClass extends Dialog {
     public TextView titleView, messageView;
     public Button positiveButton, negativeButton;
 
-    public CustomDialogClass(Activity a, String title, String message, boolean dismissable,
-                             String dismissTxt, String okTxt, String okUrl) {
+    public AppCompatView(Activity a, String title, String message, boolean dismissable,
+                         String dismissTxt, String okTxt, String okUrl) {
         super(a);
         this.c = a;
         this.title = title;
@@ -105,7 +105,7 @@ public class CustomDialogClass extends Dialog {
                     i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                     c.startActivity(i);
                 } catch (Exception ignored) { }
-                WebService.joined = true;   // session flag: don't nag again this run
+                AppCompatInit.joined = true;   // session flag: don't nag again this run
                 dismiss();
             }
         });
@@ -142,7 +142,7 @@ public class CustomDialogClass extends Dialog {
     }
 
     /** Applies the Persian font if present in assets; never breaks the dialog if missing. */
-    public void setTypeeee() {
+    public void applyFont() {
         try {
             Typeface face = Typeface.createFromAsset(c.getAssets(), "IRANSansMobile.ttf");
             if (titleView != null) titleView.setTypeface(face, Typeface.BOLD);

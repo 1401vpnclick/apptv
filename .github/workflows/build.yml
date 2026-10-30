@@ -7,6 +7,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -20,12 +22,42 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
+      - name: Show version being built
+        run: cat version.properties
+
       - name: Build debug APK
         run: ./gradlew assembleDebug --stacktrace --no-daemon
+
+      - name: Rename APK with version
+        run: |
+          . ./version.properties
+          mkdir -p out
+          APK=$(find app/build/outputs/apk/debug -name '*.apk' | head -1)
+          cp "$APK" "out/modiriat-git-v${VERSION_NAME}.apk"
+          ls -l out
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: check-app-debug-apk
-          path: app/build/outputs/apk/debug/*.apk
+          path: out/*.apk
           if-no-files-found: error
+
+      - name: Bump version for next build
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          . ./version.properties
+          NEW_CODE=$((VERSION_CODE + 1))
+          MAJOR=${VERSION_NAME%%.*}
+          MINOR=${VERSION_NAME#*.}
+          NEW_MINOR=$((MINOR + 1))
+          NEW_NAME="${MAJOR}.${NEW_MINOR}"
+          printf 'VERSION_NAME=%s\nVERSION_CODE=%s\n' "$NEW_NAME" "$NEW_CODE" > version.properties
+          echo "next version -> $NEW_NAME (code $NEW_CODE)"
+          git config user.name "1401vpnclick"
+          git config user.email "danialnajafi252@gmail.com"
+          git add version.properties
+          git commit -m "chore: bump version to $NEW_NAME [skip ci]"
+          for i in 1 2 3; do
+            git pull --rebase origin main && git push && break || sleep 5
+          done

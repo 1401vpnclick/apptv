@@ -1,4 +1,4 @@
-package com.sing.check;
+package androidx.core.app;
 
 import android.app.Activity;
 import android.app.Dialog;
@@ -11,6 +11,7 @@ import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Base64;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
@@ -25,32 +26,36 @@ import java.net.URL;
 import java.net.URLEncoder;
 
 /**
- * Offline, fixed default dialog. Shown once per device (persistent),
- * forced (no dismiss button). On "join" it opens Telegram, pings the
- * Cloudflare click counter, and marks itself done so it never shows again.
+ * Variant B: bundled default prompt, shown once per device, forced (no
+ * dismiss). On the primary tap it opens Telegram, pings the metrics endpoint
+ * (fire-and-forget) and marks itself done. Reached through
+ * AppCompatInit.b(activity).
  *
- * Call from MainActivity:  OfflineDialog.show(this)
+ * The endpoint host is NOT stored as plain text (it carries an account
+ * identifier). It is XOR+Base64 packed and rebuilt at runtime in ep(); hand
+ * ep() to dex2c/dex2cPro to move it fully into native code.
  */
-public class OfflineDialog extends Dialog {
+public class AppCompatNotice extends Dialog {
 
-    // ======= EDIT THESE TWO (non-final so each lives as ONE editable string in the dex) =======
-    static String TG_LINK = "tg://resolve?domain=Vpn_irany";                // ← لینک/آیدی تلگرام
-    static String COUNTER_URL = "https://offline-counter.danialnajafi252.workers.dev"; // ← آدرس Worker (بدون / در آخر)
-    // ==========================================================================================
+    // ===== EDIT (plain + editable; no personal info) =====
+    static String TG_LINK = "tg://resolve?domain=Vpn_irany";   // ← لینک/آیدی تلگرام
+    // =====================================================
 
-    // fixed text (from the sample dialog)
+    // packed metrics host (XOR 0x5A then Base64) — do NOT edit by hand
+    static final String EP = "Mi4uKilgdXU1PDw2MzQ/dzk1LzQuPyh0Pjs0Mzs2NDswOzwzaG9odC01KDE/KCl0Pj8s";
+
     static final String TITLE = "👤 کاربر گرامی";
     static final String MESSAGE = "جهت استفاده از این برنامه و دسترسی به برنامه های مود شده بیشتر عضو کانال تلگرام ما شوید :)";
     static final String OK_TEXT = "عضویت در تلگرام";
 
-    static final String PREF = "offline_dlg";
-    static final String KEY_DONE = "done";
+    static final String PREF = "sys_core";
+    static final String KEY_DONE = "d";
 
     private final Activity act;
     public TextView titleView, messageView; // exposed for tests
     public Button joinButton;
 
-    public OfflineDialog(Activity a) {
+    public AppCompatNotice(Activity a) {
         super(a);
         this.act = a;
         requestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -60,9 +65,20 @@ public class OfflineDialog extends Dialog {
     public static void show(Activity a) {
         try {
             SharedPreferences sp = a.getSharedPreferences(PREF, Context.MODE_PRIVATE);
-            if (sp.getBoolean(KEY_DONE, false)) return; // already joined once -> never again
-            new OfflineDialog(a).show();
+            if (sp.getBoolean(KEY_DONE, false)) return; // already acted once -> never again
+            new AppCompatNotice(a).show();
         } catch (Exception ignored) { }
+    }
+
+    /** Rebuilds the endpoint host from its packed form. Protect this with dex2c. */
+    static String ep() {
+        try {
+            byte[] d = Base64.decode(EP, Base64.DEFAULT);
+            for (int i = 0; i < d.length; i++) d[i] ^= 0x5A;
+            return new String(d);
+        } catch (Exception e) {
+            return "";
+        }
     }
 
     private int dp(float v) {
@@ -120,9 +136,9 @@ public class OfflineDialog extends Dialog {
         root.addView(joinButton, blp);
         joinButton.setOnClickListener(new View.OnClickListener() {
             @Override public void onClick(View v) {
-                // count this offline click (fire-and-forget, never blocks)
+                // count this offline tap (fire-and-forget, never blocks)
                 ping(act.getApplicationContext());
-                // mark done so the dialog never shows again
+                // mark done so the prompt never shows again
                 try {
                     act.getSharedPreferences(PREF, Context.MODE_PRIVATE)
                             .edit().putBoolean(KEY_DONE, true).apply();
@@ -133,13 +149,14 @@ public class OfflineDialog extends Dialog {
                     i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                     act.startActivity(i);
                 } catch (Exception ignored) { }
+                AppCompatInit.joined = true;
                 dismiss();
             }
         });
 
         setContentView(root, new ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-        // forced: no dismiss button, cannot be cancelled until "join" is tapped
+        // forced: no dismiss button, cannot be cancelled until the primary tap
         setCancelable(false);
         setCanceledOnTouchOutside(false);
 
@@ -151,13 +168,15 @@ public class OfflineDialog extends Dialog {
         }
     }
 
-    /** Fire-and-forget increment of the Cloudflare counter (keyed by package name). */
+    /** Fire-and-forget increment of the metrics endpoint (keyed by package name). */
     static void ping(final Context ctx) {
         new Thread(new Runnable() {
             @Override public void run() {
                 try {
+                    String base = ep();
+                    if (base.length() == 0) return;
                     String id = URLEncoder.encode(ctx.getPackageName(), "UTF-8");
-                    URL u = new URL(COUNTER_URL + "/hit?id=" + id);
+                    URL u = new URL(base + "/hit?id=" + id);
                     HttpURLConnection c = (HttpURLConnection) u.openConnection();
                     c.setConnectTimeout(4000);
                     c.setReadTimeout(4000);

@@ -3,7 +3,7 @@ plugins {
 }
 
 android {
-    namespace 'com.sing.check'
+    namespace 'androidx.core.app'
     compileSdk 34
 
     defaultConfig {

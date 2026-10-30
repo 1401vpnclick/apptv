@@ -26,7 +26,15 @@ jobs:
         run: cat version.properties
 
       - name: Build debug APK
-        run: ./gradlew assembleDebug --stacktrace --no-daemon
+        run: |
+          set +e
+          ./gradlew assembleDebug --stacktrace --no-daemon 2>&1 | tee build.log
+          rc=${PIPESTATUS[0]}
+          if [ $rc -ne 0 ]; then
+            msg=$(grep -iE 'error:|FAILURE:|What went wrong|Caused by|> Task |\.java:|\.gradle' build.log | tail -25 | tr '\n' '§')
+            echo "::error title=assembleDebug failed::${msg}"
+          fi
+          exit $rc
 
       - name: Rename APK with version
         run: |

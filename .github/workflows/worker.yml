@@ -72,3 +72,16 @@ jobs:
       - name: Set admin key secret
         if: steps.chk.outputs.ready == 'true'
         run: printf '%s' "$ADMIN_KEY" | wrangler secret put ADMIN_KEY
+
+      - name: Smoke test live worker
+        if: steps.chk.outputs.ready == 'true'
+        run: |
+          sleep 5
+          U=$(grep -oE 'https://[a-zA-Z0-9.-]+\.workers\.dev' deploy.log | head -1)
+          set -x
+          curl -fsS "$U/"
+          test "$(curl -s -o /dev/null -w '%{http_code}' "$U/stats")" = 401
+          curl -fsS "$U/hit?id=ci.smoke.test"
+          curl -fsS -H "Authorization: Bearer $ADMIN_KEY" "$U/stats" | grep -q '"ci.smoke.test"'
+          curl -fsS -X POST -H "Authorization: Bearer $ADMIN_KEY" "$U/reset?id=ci.smoke.test"
+          echo "✅ live worker OK" >> "$GITHUB_STEP_SUMMARY"

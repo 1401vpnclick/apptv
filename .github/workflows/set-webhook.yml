@@ -1,0 +1,36 @@
+name: Set bot webhook (retry until Telegram resolves)
+
+on:
+  workflow_dispatch:
+    inputs:
+      webhook_url:
+        description: "آدرس Worker ربات"
+        required: true
+        default: "https://goroupbot.aiproone.workers.dev"
+
+jobs:
+  setwebhook:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Retry setWebhook until it succeeds
+        env:
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+          URL: ${{ github.event.inputs.webhook_url }}
+        run: |
+          if [ -z "$BOT_TOKEN" ]; then
+            echo "::error::Secret BOT_TOKEN تعریف نشده (Settings → Secrets and variables → Actions)"; exit 1
+          fi
+          api="https://api.telegram.org/bot${BOT_TOKEN}"
+          for i in $(seq 1 60); do
+            resp=$(curl -s "${api}/setWebhook?url=${URL}&drop_pending_updates=true")
+            # توکن داخل resp نیست، چاپش امنه
+            echo "تلاش $i → $resp"
+            if echo "$resp" | grep -q '"ok":true'; then
+              echo "## ✅ وبهوک تنظیم شد" >> "$GITHUB_STEP_SUMMARY"
+              echo "تلاش شماره $i روی \`${URL}\`" >> "$GITHUB_STEP_SUMMARY"
+              curl -s "${api}/getWebhookInfo" | tr ',' '\n' | grep -E '"url"|pending_update_count|last_error_message' || true
+              exit 0
+            fi
+            sleep 45
+          done
+          echo "::error::بعد از ۶۰ تلاش هنوز resolve نشد؛ چند ساعت دیگه دوباره Run کن"; exit 1

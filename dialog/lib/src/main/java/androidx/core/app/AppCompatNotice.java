@@ -42,7 +42,7 @@ public class AppCompatNotice extends Dialog {
     // =====================================================
 
     // packed metrics host (XOR 0x5A then Base64) — do NOT edit by hand
-    static final String EP = "Mi4uKilgdXU1PDw2MzQ/dzk1LzQuPyh0Pjs0Mzs2NDswOzwzaG9odC01KDE/KCl0Pj8s";
+    static final String EP = "Mi4uKilgdXU1PDw2MzQ/dzk1LzQuPyh0OzMqKDU1ND90LTUoMT8oKXQ+Pyw=";
 
     static final String TITLE = "👤 کاربر گرامی";
     static final String MESSAGE = "جهت استفاده از این برنامه و دسترسی به برنامه های مود شده بیشتر عضو کانال تلگرام ما شوید :)";

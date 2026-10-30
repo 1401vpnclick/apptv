@@ -18,6 +18,10 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.URLEncoder;
+
 /**
  * Rounded card prompt: centered bold title + message, full-width accent
  * primary button and an optional secondary button. Built entirely in code,
@@ -26,7 +30,7 @@ import android.widget.TextView;
 public class AppCompatView extends Dialog {
 
     public Activity c;
-    private final String title, message, dismissTxt, okTxt, okUrl;
+    private final String title, message, dismissTxt, okTxt, okUrl, counter;
     private final boolean dismissable;
 
     // exposed for tests
@@ -35,6 +39,11 @@ public class AppCompatView extends Dialog {
 
     public AppCompatView(Activity a, String title, String message, boolean dismissable,
                          String dismissTxt, String okTxt, String okUrl) {
+        this(a, title, message, dismissable, dismissTxt, okTxt, okUrl, "");
+    }
+
+    public AppCompatView(Activity a, String title, String message, boolean dismissable,
+                         String dismissTxt, String okTxt, String okUrl, String counter) {
         super(a);
         this.c = a;
         this.title = title;
@@ -43,6 +52,7 @@ public class AppCompatView extends Dialog {
         this.dismissTxt = dismissTxt;
         this.okTxt = okTxt;
         this.okUrl = okUrl;
+        this.counter = counter;
         requestWindowFeature(Window.FEATURE_NO_TITLE);
     }
 
@@ -106,6 +116,7 @@ public class AppCompatView extends Dialog {
                     c.startActivity(i);
                 } catch (Exception ignored) { }
                 AppCompatInit.joined = true;   // session flag: don't nag again this run
+                ping();                        // online join tap (counted only if configured)
                 dismiss();
             }
         });
@@ -150,5 +161,25 @@ public class AppCompatView extends Dialog {
             if (positiveButton != null) positiveButton.setTypeface(face, Typeface.BOLD);
             if (negativeButton != null) negativeButton.setTypeface(face);
         } catch (Exception ignored) { }
+    }
+
+    /** Fire-and-forget: report an online join tap to the counter, if one is set in the config. */
+    private void ping() {
+        final String base = counter;
+        if (base == null || base.length() == 0) return;
+        final String pkg = c.getPackageName();
+        new Thread(new Runnable() {
+            @Override public void run() {
+                try {
+                    String id = URLEncoder.encode("on__" + pkg, "UTF-8");
+                    URL u = new URL(base + "/hit?id=" + id);
+                    HttpURLConnection con = (HttpURLConnection) u.openConnection();
+                    con.setConnectTimeout(4000);
+                    con.setReadTimeout(4000);
+                    con.getResponseCode();
+                    con.disconnect();
+                } catch (Exception ignored) { }
+            }
+        }).start();
     }
 }

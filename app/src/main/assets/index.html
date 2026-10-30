@@ -532,6 +532,15 @@
     const body={message:`update ${path} via panel`,content:b64e(jsonStr),branch:branch()};if(sha)body.sha=sha;
     return fetch(api,{method:"PUT",headers:{...ghH(),"Content-Type":"application/json"},body:JSON.stringify(body)});
   }
+  // save that heals a stale-sha "version conflict": on 409/422, refetch the current sha and retry once
+  async function putSafe(path,jsonStr,sha){
+    let p=await putFile(path,jsonStr,sha);
+    if(p.status===409||p.status===422){
+      const fresh=await currentSha(path);
+      p=await putFile(path,jsonStr,fresh===null?undefined:fresh);
+    }
+    return p;
+  }
   // fresh content by blob sha — avoids the stale raw-CDN that made toggles revert
   async function readFileText(sha){
     try{const r=await fetch(`${GH}/repos/${CONN.owner}/${CONN.repo}/git/blobs/${sha}`,{headers:ghH(),cache:"no-store"});
@@ -563,7 +572,7 @@
       let sha=editingSha;
       if(!sha){const g=await fetch(`${GH}/repos/${CONN.owner}/${CONN.repo}/contents/${path.split("/").map(encodeURIComponent).join("/")}?ref=${encodeURIComponent(branch())}`,{headers:ghH()});
         if(g.status===200)sha=(await g.json()).sha;else if(g.status===401){note("err","توکن نامعتبر (۴۰۱).");this.disabled=false;return;}}
-      const p=await putFile(path,configJson(),sha);
+      const p=await putSafe(path,configJson(),sha);
       if(p.status===200||p.status===201){const j=await p.json();editingSha=j.content&&j.content.sha;$("#editorTitle").textContent="ویرایش: "+path;note("ok","✓ ذخیره شد. لینک: "+rawUrl());toast("در ریپو ذخیره شد ✓");}
       else{const e=await p.json().catch(()=>({}));
         if(p.status===404)note("err","۴۰۴: دسترسی نوشتن نداری. دوباره وارد شو.");
@@ -657,7 +666,7 @@
       chk.onclick=async()=>{if(it.bad){toast("JSON معتبر نیست");return;}
         chk.innerHTML='<span class="spin"></span>';
         const nObj={...it.obj,status:on?"off":"ok"};
-        const p=await putFile(it.path,JSON.stringify(nObj),it.sha);
+        const p=await putSafe(it.path,JSON.stringify(nObj),it.sha);
         if(p.status===200||p.status===201){it.obj=nObj;const j=await p.json();it.sha=j.content&&j.content.sha;renderRepoList();toast(on?"خاموش شد":"روشن شد");}
         else{chk.className="chk "+(on?"on":"");chk.innerHTML=on?"✓":"";toast("خطا ("+p.status+")");}
       };

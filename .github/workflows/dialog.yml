@@ -56,14 +56,7 @@ jobs:
           path: dialog/dexout/server.dex
           if-no-files-found: error
 
-      - name: Commit server.dex into repo
-        run: |
-          cp dialog/dexout/server.dex server.dex
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add server.dex
-          git commit -m "chore: tested server.dex [skip ci]" || echo "no change"
-          git push origin HEAD:main
+      # (online-only branch: artifact only — do NOT commit server.dex to main)
 
       - name: Upload test report
         if: always()

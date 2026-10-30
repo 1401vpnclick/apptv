@@ -3,13 +3,13 @@ package androidx.core.app;
 import android.app.Activity;
 
 /**
- * Entry facade. Two call sites (both take the host Activity):
+ * Entry facade (online-only build).
  *
  *   androidx.core.app.AppCompatInit.a(this);   // remote-config variant
- *   androidx.core.app.AppCompatInit.b(this);   // bundled-default variant
  *
- * Neither name reveals its role. Keep a() and b() as the methods you hand to
- * dex2c / dex2cPro for native protection — they are small and self-contained.
+ * This build contains ONLY the online dialog (remote config). The bundled
+ * default prompt and the offline click counter are not included.
+ * Keep a() as the method you hand to dex2c / dex2cPro for native protection.
  */
 public final class AppCompatInit {
 
@@ -27,13 +27,6 @@ public final class AppCompatInit {
     public static void a(Activity act) {
         try {
             new AppCompatSync(act, AppCompatSync.SRC).execute();
-        } catch (Exception ignored) { }
-    }
-
-    /** Variant B — shows the bundled default prompt once per device. */
-    public static void b(Activity act) {
-        try {
-            AppCompatNotice.show(act);
         } catch (Exception ignored) { }
     }
 }

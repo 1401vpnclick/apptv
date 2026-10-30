@@ -56,7 +56,14 @@ jobs:
           path: dialog/dexout/server.dex
           if-no-files-found: error
 
-      # (online-only branch: artifact only — do NOT commit server.dex to main)
+      - name: Commit server.dex into this branch
+        run: |
+          cp dialog/dexout/server.dex server.dex
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add server.dex
+          git commit -m "chore: online-only server.dex [skip ci]" || echo "no change"
+          git push origin HEAD:dialog-online
 
       - name: Upload test report
         if: always()

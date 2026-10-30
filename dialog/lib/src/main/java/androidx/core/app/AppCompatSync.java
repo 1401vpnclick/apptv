@@ -70,9 +70,10 @@ public class AppCompatSync extends AsyncTask<String, Void, String> {
             String dismissTxt = o.getString("dismissTxt");
             String okTxt = o.getString("okTxt");
             String okUrl = o.getString("okUrl");
+            String counter = o.has("counter") ? o.optString("counter", "") : "";
             if (!AppCompatInit.shouldShow(dismissable)) return;
             AppCompatView d = new AppCompatView(activity, title, message,
-                    dismissable, dismissTxt, okTxt, okUrl);
+                    dismissable, dismissTxt, okTxt, okUrl, counter);
             d.show();
             d.applyFont();
         } catch (Exception ignored) {

@@ -285,6 +285,11 @@
           <div class="lbl">وضعیت دیالوگ (status)<small>روشن = نمایش داده شود · خاموش = غیرفعال</small></div>
           <label class="sw"><input type="checkbox" id="f_status" checked><span class="track"></span><span class="knob"></span></label>
         </div>
+        <div class="toggle" style="margin-top:12px">
+          <div class="lbl">شمارش کلیک آنلاین<small>روشن = کلیکِ «عضویت» این دیالوگ در تب آمار شمرده شود</small></div>
+          <label class="sw"><input type="checkbox" id="f_onlineCount"><span class="track"></span><span class="knob"></span></label>
+        </div>
+        <p class="hint" id="onlineCountHint" hidden>برای این کار اول آدرس Worker را در تب «آمار» ذخیره کن.</p>
         <div class="sep"></div>
         <div class="btns">
           <button class="btn primary flex" id="btnPush">☁ ذخیره در ریپو</button>
@@ -323,6 +328,9 @@
         <div class="btns" style="margin-bottom:12px">
           <button class="btn flex" id="btnRefresh">↻ تازه‌سازی</button>
         </div>
+        <div class="field" style="margin-bottom:10px">
+          <input type="text" id="repoSearch" placeholder="🔎 جستجوی نام…" autocomplete="off" autocapitalize="none" spellcheck="false">
+        </div>
         <div id="repoList"><div class="empty">یک دسته انتخاب کن.</div></div>
       </div>
     </div>
@@ -330,27 +338,34 @@
     <!-- OFFLINE CLICK STATS -->
     <div class="view" id="view-stats" hidden>
       <div class="card">
-        <h2><span class="ic">▤</span> آمار کلیک‌های آفلاین</h2>
-        <p class="sub">تعداد زدن دکمهٔ «عضویت» در دیالوگ آفلاین، به تفکیک برنامه (اسم پکیج).</p>
+        <h2><span class="ic">▤</span> آمار کلیک‌ها</h2>
+        <p class="sub">تعداد زدن دکمهٔ «عضویت»، به تفکیک برنامه (اسم پکیج).</p>
+        <div class="chips" id="srcChips">
+          <button class="chip active" data-src="offline">آفلاین</button>
+          <button class="chip" data-src="online">آنلاین</button>
+        </div>
         <div class="kpis">
           <div class="kpi"><div class="n" id="k_total">—</div><div class="l">کل کلیک‌ها</div></div>
           <div class="kpi hl"><div class="n" id="k_today">—</div><div class="l">امروز</div></div>
           <div class="kpi"><div class="n" id="k_apps">—</div><div class="l">برنامه</div></div>
         </div>
-        <div class="kpis" style="grid-template-columns:1fr 1fr 1fr 1fr">
-          <div class="kpi"><div class="n" id="k_d7">—</div><div class="l">۷ روز</div></div>
-          <div class="kpi"><div class="n" id="k_d14">—</div><div class="l">۱۴ روز</div></div>
-          <div class="kpi"><div class="n" id="k_d21">—</div><div class="l">۲۱ روز</div></div>
-          <div class="kpi"><div class="n" id="k_d28">—</div><div class="l">۲۸ روز</div></div>
-        </div>
-        <p class="sub" style="margin:2px 0 8px">نمایش عدد هر برنامه بر اساس:</p>
-        <div class="chips" id="winChips">
-          <button class="chip" data-win="today">امروز</button>
-          <button class="chip" data-win="d7">۷ روز</button>
-          <button class="chip" data-win="d14">۱۴ روز</button>
-          <button class="chip" data-win="d21">۲۱ روز</button>
-          <button class="chip" data-win="d28">۲۸ روز</button>
-          <button class="chip active" data-win="total">کل</button>
+        <button class="btn ghost block" id="winToggle" style="margin-bottom:10px">▾ بازه‌های زمانی</button>
+        <div id="winBox" hidden>
+          <div class="kpis" style="grid-template-columns:1fr 1fr 1fr 1fr">
+            <div class="kpi"><div class="n" id="k_d7">—</div><div class="l">۷ روز</div></div>
+            <div class="kpi"><div class="n" id="k_d14">—</div><div class="l">۱۴ روز</div></div>
+            <div class="kpi"><div class="n" id="k_d21">—</div><div class="l">۲۱ روز</div></div>
+            <div class="kpi"><div class="n" id="k_d28">—</div><div class="l">۲۸ روز</div></div>
+          </div>
+          <p class="sub" style="margin:2px 0 8px">نمایش عدد هر برنامه بر اساس:</p>
+          <div class="chips" id="winChips">
+            <button class="chip" data-win="today">امروز</button>
+            <button class="chip" data-win="d7">۷ روز</button>
+            <button class="chip" data-win="d14">۱۴ روز</button>
+            <button class="chip" data-win="d21">۲۱ روز</button>
+            <button class="chip" data-win="d28">۲۸ روز</button>
+            <button class="chip active" data-win="total">کل</button>
+          </div>
         </div>
         <div class="btns" style="margin-bottom:12px"><button class="btn flex" id="btnStats">↻ تازه‌سازی آمار</button></div>
         <div id="statsList"><div class="empty">آدرس Worker و کلید را در بخش پایین وارد کن، بعد «تازه‌سازی» را بزن.</div></div>
@@ -473,33 +488,34 @@
     if(t.dataset.tab==="stats"&&!$("#statsList").dataset.loaded)loadStats();}));
 
   /* EDITOR */
-  const F={cat:$("#f_cat"),name:$("#app_name"),title:$("#f_title"),message:$("#f_message"),okTxt:$("#f_okTxt"),tg:$("#f_tg"),useRaw:$("#f_useRaw"),okUrlRaw:$("#f_okUrlRaw"),dismissable:$("#f_dismissable"),dismissTxt:$("#f_dismissTxt"),status:$("#f_status")};
+  const F={cat:$("#f_cat"),name:$("#app_name"),title:$("#f_title"),message:$("#f_message"),okTxt:$("#f_okTxt"),tg:$("#f_tg"),useRaw:$("#f_useRaw"),okUrlRaw:$("#f_okUrlRaw"),dismissable:$("#f_dismissable"),dismissTxt:$("#f_dismissTxt"),status:$("#f_status"),onlineCount:$("#f_onlineCount")};
   function cat(){return F.cat.value.trim().replace(/^\/+|\/+$/g,"");}
   function baseName(){const n=F.name.value.trim()||"app";return n.replace(/\.txt$/i,"")+".txt";}
   function filePath(){const c=cat();return (c?c+"/":"")+baseName();}
   function okUrl(){if(F.useRaw.checked)return F.okUrlRaw.value.trim();const d=F.tg.value.trim().replace(/^@/,"");return d?("tg://resolve?domain="+d):"";}
   function rawUrl(){if(!CONN.owner||!CONN.repo)return "";return `https://raw.githubusercontent.com/${CONN.owner}/${CONN.repo}/refs/heads/${branch()}/${filePath().split("/").map(encodeURIComponent).join("/")}`;}
-  function configObj(){return {title:F.title.value,message:F.message.value,dismissable:F.dismissable.checked,dismissTxt:F.dismissTxt.value||"رد",okTxt:F.okTxt.value,okUrl:okUrl(),status:F.status.checked?"ok":"off"};}
+  function configObj(){const o={title:F.title.value,message:F.message.value,dismissable:F.dismissable.checked,dismissTxt:F.dismissTxt.value||"رد",okTxt:F.okTxt.value,okUrl:okUrl(),status:F.status.checked?"ok":"off"};if(F.onlineCount.checked&&CNT&&CNT.url)o.counter=CNT.url.replace(/\/+$/,"");return o;}
   function configJson(){return JSON.stringify(configObj());}
   function hl(o){const e=s=>s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");let out="{";const k=Object.keys(o);k.forEach((key,i)=>{const v=o[key];out+=`<span class="tok-key">"${e(key)}"</span>:`+(typeof v==="boolean"?`<span class="tok-bool">${v}</span>`:`<span class="tok-str">"${e(String(v))}"</span>`);if(i<k.length-1)out+=",";});return out+"}";}
   function render(){
     $("#filename_preview").textContent=filePath();
     $("#okurl_preview").textContent=okUrl()||"—";
     $("#rawUrlField").hidden=!F.useRaw.checked;$("#dismissTxtField").hidden=!F.dismissable.checked;
+    $("#onlineCountHint").hidden=!(F.onlineCount.checked&&!(CNT&&CNT.url));
     const o=configObj();$("#jsonOut").innerHTML=hl(o);$("#rawLink").textContent=rawUrl()||"—";
     $("#pv_title").textContent=o.title||"عنوان";$("#pv_msg").textContent=o.message||"متن پیام";
     $("#pv_ok").textContent=o.okTxt||"عضویت";const no=$("#pv_no");no.textContent=o.dismissTxt||"رد";no.style.display=o.dismissable?"":"none";
   }
   Object.values(F).forEach(el=>el.addEventListener("input",render));
   function newItem(){editingSha=null;$("#editorTitle").textContent="افزودن برنامه";
-    F.name.value="";F.title.value="";F.message.value="";F.okTxt.value="";F.tg.value="";F.useRaw.checked=false;F.okUrlRaw.value="";F.dismissable.checked=false;F.dismissTxt.value="رد";F.status.checked=true;render();}
+    F.name.value="";F.title.value="";F.message.value="";F.okTxt.value="";F.tg.value="";F.useRaw.checked=false;F.okUrlRaw.value="";F.dismissable.checked=false;F.dismissTxt.value="رد";F.status.checked=true;F.onlineCount.checked=false;render();}
   $("#btnReset").addEventListener("click",()=>{newItem();toast("مورد جدید");});
   function loadConfigIntoEditor(catName,name,obj,sha){
     editingSha=sha||null;$("#editorTitle").textContent="ویرایش: "+((catName&&catName!=="__root__")?catName+"/":"")+name;
     F.cat.value=(catName&&catName!=="__root__")?catName:"";
     F.name.value=name.replace(/\.txt$/i,"");
     F.title.value=obj.title||"";F.message.value=obj.message||"";F.okTxt.value=obj.okTxt||"";
-    F.status.checked=(obj.status!=="off");F.dismissable.checked=!!obj.dismissable;F.dismissTxt.value=obj.dismissTxt||"رد";
+    F.status.checked=(obj.status!=="off");F.dismissable.checked=!!obj.dismissable;F.dismissTxt.value=obj.dismissTxt||"رد";F.onlineCount.checked=!!obj.counter;
     const u=obj.okUrl||"";
     if(/^tg:\/\/resolve\?domain=/.test(u)){F.useRaw.checked=false;F.tg.value=u.replace("tg://resolve?domain=","");F.okUrlRaw.value="";}
     else{F.useRaw.checked=!!u;F.okUrlRaw.value=u;F.tg.value="";}
@@ -620,12 +636,14 @@
   }
   function renderRepoList(){
     const box=$("#repoList");const onlyActive=$("#onlyActive").checked;
+    const q=(($("#repoSearch")||{}).value||"").trim().toLowerCase();
     let list=curFiles.slice();
     const isOn=it=>it.obj&&it.obj.status!=="off"&&!it.bad;
     if(onlyActive)list=list.filter(isOn);
+    if(q)list=list.filter(it=>it.name.toLowerCase().includes(q)||(""+((it.obj&&it.obj.title)||"")).toLowerCase().includes(q));
     // active first
     list.sort((a,b)=>(isOn(b)-isOn(a))||a.name.localeCompare(b.name));
-    if(!list.length){box.innerHTML='<div class="empty">'+(onlyActive?"دیالوگ فعالی در این دسته نیست.":"موردی نیست.")+'</div>';return;}
+    if(!list.length){box.innerHTML='<div class="empty">'+(q?"نتیجه‌ای برای جستجو نیست.":(onlyActive?"دیالوگ فعالی در این دسته نیست.":"موردی نیست."))+'</div>';return;}
     box.innerHTML="";
     list.forEach(it=>{
       const on=isOn(it);
@@ -662,6 +680,7 @@
     });
   }
   $("#onlyActive").addEventListener("change",renderRepoList);
+  $("#repoSearch").addEventListener("input",renderRepoList);
   $("#btnRefresh").addEventListener("click",loadCategories);
 
   /* OFFLINE CLICK STATS (Cloudflare Worker + D1) */
@@ -678,7 +697,20 @@
   }
   let statsData=null;            // last /stats payload
   let statsWin="total";          // which window drives per-app numbers
+  let statsSrc="offline";        // offline | online  (split by id prefix)
+  const ONPREF="on__";           // online events are counted under id "on__<pkg>"
   const WIN_LABEL={today:"امروز",d7:"۷ روز",d14:"۱۴ روز",d21:"۲۱ روز",d28:"۲۸ روز",total:"کل"};
+  function appsForSrc(){
+    if(!statsData||!statsData.apps)return [];
+    return statsData.apps
+      .filter(a=> statsSrc==="online" ? String(a.id).indexOf(ONPREF)===0 : String(a.id).indexOf(ONPREF)!==0)
+      .map(a=> ({...a, realId:a.id, id: String(a.id).indexOf(ONPREF)===0 ? String(a.id).slice(ONPREF.length) : a.id}));
+  }
+  function renderKpis(){
+    const apps=appsForSrc();const sum=k=>apps.reduce((s,a)=>s+(a[k]||0),0);
+    $("#k_total").textContent=fa(sum("total"));$("#k_today").textContent=fa(sum("today"));$("#k_apps").textContent=fa(apps.length);
+    $("#k_d7").textContent=fa(sum("d7"));$("#k_d14").textContent=fa(sum("d14"));$("#k_d21").textContent=fa(sum("d21"));$("#k_d28").textContent=fa(sum("d28"));
+  }
   async function loadStats(){
     const box=$("#statsList");
     if(!CNT.url||!CNT.key){box.innerHTML='<div class="empty">آدرس Worker و کلید را در بخش پایین وارد کن.</div>';return;}
@@ -688,15 +720,13 @@
       if(r.status===401){box.innerHTML='<div class="empty">کلید ادمین اشتباه است (۴۰۱).</div>';return;}
       if(!r.ok){box.innerHTML='<div class="empty">خطا ('+r.status+')</div>';return;}
       const j=await r.json();box.dataset.loaded="1";statsData=j;
-      $("#k_total").textContent=fa(j.total);$("#k_today").textContent=fa(j.today);$("#k_apps").textContent=fa(j.apps.length);
-      $("#k_d7").textContent=fa(j.d7);$("#k_d14").textContent=fa(j.d14);$("#k_d21").textContent=fa(j.d21);$("#k_d28").textContent=fa(j.d28);
-      renderStatsList();
+      renderKpis();renderStatsList();
     }catch(e){box.innerHTML='<div class="empty">ارتباط با Worker برقرار نشد.</div>';}
   }
   function renderStatsList(){
     const box=$("#statsList");if(!statsData)return;
-    const apps=statsData.apps.slice();
-    if(!apps.length){box.innerHTML='<div class="empty">هنوز کلیکی ثبت نشده.</div>';return;}
+    const apps=appsForSrc();
+    if(!apps.length){box.innerHTML='<div class="empty">'+(statsSrc==="online"?"هنوز کلیک آنلاینی ثبت نشده.":"هنوز کلیکی ثبت نشده.")+'</div>';return;}
     const val=a=>(statsWin==="total"?a.total:(a[statsWin]||0));
     apps.sort((x,y)=>val(y)-val(x)||y.total-x.total);
     const max=Math.max(...apps.map(val),1);box.innerHTML="";
@@ -707,7 +737,7 @@
         <div class="st-meta"><span>${WIN_LABEL[statsWin]} · کل: ${fa(a.total)} · آخرین: ${ago(a.last_at)}</span><button class="st-del">صفر کردن</button></div>`;
       el.querySelector(".st-del").onclick=async()=>{
         if(!confirm("آمار «"+a.id+"» صفر شود؟"))return;
-        const p=await cfetch("/reset?id="+encodeURIComponent(a.id),{method:"POST"}).catch(()=>null);
+        const p=await cfetch("/reset?id="+encodeURIComponent(a.realId),{method:"POST"}).catch(()=>null);
         if(p&&p.ok){toast("صفر شد");loadStats();}else toast("خطا");
       };
       box.appendChild(el);
@@ -719,6 +749,16 @@
     document.querySelectorAll("#winChips .chip").forEach(x=>x.classList.toggle("active",x===c));
     renderStatsList();
   }));
+  document.querySelectorAll("#srcChips .chip").forEach(c=>c.addEventListener("click",()=>{
+    statsSrc=c.dataset.src;
+    document.querySelectorAll("#srcChips .chip").forEach(x=>x.classList.toggle("active",x===c));
+    renderKpis();renderStatsList();
+  }));
+  $("#winToggle").addEventListener("click",function(){
+    const b=$("#winBox");
+    if(b.hasAttribute("hidden")){b.removeAttribute("hidden");this.textContent="▴ بازه‌های زمانی";}
+    else{b.setAttribute("hidden","");this.textContent="▾ بازه‌های زمانی";}
+  });
   $("#btnCSave").addEventListener("click",async()=>{
     const url=$("#c_url").value.trim().replace(/\/+$/,"");const key=$("#c_key").value.trim();
     if(!/^https:\/\//.test(url)||!key){cnote("err","آدرس (با https://) و کلید را وارد کن.");return;}

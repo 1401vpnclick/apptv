@@ -14,7 +14,7 @@ android {
         applicationId 'com.checkapp.panel'
         minSdk 21
         targetSdk 34
-        versionCode (verProps.getProperty('VERSION_CODE', '1')).toInteger()
+        versionCode verProps.getProperty('VERSION_CODE', '1').toInteger()
         versionName verProps.getProperty('VERSION_NAME', '1.0')
     }
 

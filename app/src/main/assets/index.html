@@ -333,6 +333,21 @@
           <div class="kpi hl"><div class="n" id="k_today">—</div><div class="l">امروز</div></div>
           <div class="kpi"><div class="n" id="k_apps">—</div><div class="l">برنامه</div></div>
         </div>
+        <div class="kpis" style="grid-template-columns:1fr 1fr 1fr 1fr">
+          <div class="kpi"><div class="n" id="k_d7">—</div><div class="l">۷ روز</div></div>
+          <div class="kpi"><div class="n" id="k_d14">—</div><div class="l">۱۴ روز</div></div>
+          <div class="kpi"><div class="n" id="k_d21">—</div><div class="l">۲۱ روز</div></div>
+          <div class="kpi"><div class="n" id="k_d28">—</div><div class="l">۲۸ روز</div></div>
+        </div>
+        <p class="sub" style="margin:2px 0 8px">نمایش عدد هر برنامه بر اساس:</p>
+        <div class="chips" id="winChips">
+          <button class="chip" data-win="today">امروز</button>
+          <button class="chip" data-win="d7">۷ روز</button>
+          <button class="chip" data-win="d14">۱۴ روز</button>
+          <button class="chip" data-win="d21">۲۱ روز</button>
+          <button class="chip" data-win="d28">۲۸ روز</button>
+          <button class="chip active" data-win="total">کل</button>
+        </div>
         <div class="btns" style="margin-bottom:12px"><button class="btn flex" id="btnStats">↻ تازه‌سازی آمار</button></div>
         <div id="statsList"><div class="empty">آدرس Worker و کلید را در بخش پایین وارد کن، بعد «تازه‌سازی» را بزن.</div></div>
       </div>
@@ -509,29 +524,36 @@
   });
 
   /* REPO MANAGEMENT — categories = folders */
+  function faNum(n){return Number(n||0).toLocaleString("fa-IR");}
   async function loadCategories(){
     if(!hasLogin())return;
     const chips=$("#catChips");chips.innerHTML='<span class="empty" style="padding:6px"><span class="spin"></span> بارگذاری دسته‌ها…</span>';
     try{
-      const r=await fetch(`${GH}/repos/${CONN.owner}/${CONN.repo}/contents?ref=${encodeURIComponent(branch())}`,{headers:ghH()});
-      if(!r.ok){chips.innerHTML='<span class="empty" style="padding:6px">خطا ('+r.status+')</span>';return;}
-      const items=await r.json();
-      const dirs=items.filter(i=>i.type==="dir").map(i=>i.name);
-      const rootFiles=items.filter(i=>i.type==="file"&&/\.txt$/i.test(i.name)).length;
-      const cats=[{id:"__all__",label:"همه"}];
-      if(rootFiles) cats.push({id:"__root__",label:"ریشه"});
-      dirs.forEach(d=>cats.push({id:d,label:d}));
-      if(!cats.length){chips.innerHTML='<span class="empty" style="padding:6px">فایلی نیست. از ویرایشگر یکی بساز (با دسته).</span>';$("#repoList").innerHTML='<div class="empty">—</div>';chips.dataset.loaded="1";return;}
+      // one recursive tree call: lists every .txt and lets us count per category
+      const t=await fetch(`${GH}/repos/${CONN.owner}/${CONN.repo}/git/trees/${encodeURIComponent(branch())}?recursive=1`,{headers:ghH()});
+      if(!t.ok){chips.innerHTML='<span class="empty" style="padding:6px">خطا ('+t.status+')</span>';return;}
+      const tree=(await t.json()).tree||[];
+      const txts=tree.filter(x=>x.type==="blob"&&/\.txt$/i.test(x.path)).map(x=>x.path);
+      const dirsAll=tree.filter(x=>x.type==="tree"&&!x.path.includes("/")).map(x=>x.path);
+      const total=txts.length;
+      const rootCount=txts.filter(p=>!p.includes("/")).length;
+      const dirCount={};dirsAll.forEach(d=>dirCount[d]=0);
+      txts.forEach(p=>{if(p.includes("/")){const d=p.split("/")[0];dirCount[d]=(dirCount[d]||0)+1;}});
+      const cats=[{id:"__all__",label:"همه",count:total}];
+      if(rootCount) cats.push({id:"__root__",label:"ریشه",count:rootCount});
+      Object.keys(dirCount).sort().forEach(d=>cats.push({id:d,label:d,count:dirCount[d]}));
+      if(!total&&!cats.some(c=>c.id!=="__all__")){chips.innerHTML='<span class="empty" style="padding:6px">فایلی نیست. از ویرایشگر یکی بساز (با دسته).</span>';$("#repoList").innerHTML='<div class="empty">—</div>';chips.dataset.loaded="1";return;}
       chips.innerHTML="";
       cats.forEach(c=>{
-        const el=document.createElement("button");el.className="chip"+(c.id===curCat?" active":"");el.textContent=c.label;
+        const el=document.createElement("button");el.className="chip"+(c.id===curCat?" active":"");el.dataset.id=c.id;
+        el.innerHTML=c.label.replace(/</g,"&lt;")+' <span class="cnt">'+faNum(c.count)+'</span>';
         el.onclick=()=>{curCat=c.id;document.querySelectorAll("#catChips .chip").forEach(x=>x.classList.remove("active"));el.classList.add("active");loadCategoryFiles(c.id);};
         chips.appendChild(el);
       });
       chips.dataset.loaded="1";
       // auto-select first category
       if(!cats.find(c=>c.id===curCat)) curCat=(cats.find(c=>c.id!=="__all__")||cats[0]).id;
-      const active=[...chips.children].find(x=>x.textContent===(cats.find(c=>c.id===curCat).label));if(active)active.classList.add("active");
+      const active=[...chips.children].find(x=>x.dataset.id===curCat);if(active)active.classList.add("active");
       loadCategoryFiles(curCat);
     }catch(e){chips.innerHTML='<span class="empty" style="padding:6px">ارتباط برقرار نشد</span>';}
   }
@@ -606,6 +628,9 @@
   async function cfetch(path,opt){
     return fetch(CNT.url+path,{...(opt||{}),headers:{Authorization:"Bearer "+CNT.key},cache:"no-store"});
   }
+  let statsData=null;            // last /stats payload
+  let statsWin="total";          // which window drives per-app numbers
+  const WIN_LABEL={today:"امروز",d7:"۷ روز",d14:"۱۴ روز",d21:"۲۱ روز",d28:"۲۸ روز",total:"کل"};
   async function loadStats(){
     const box=$("#statsList");
     if(!CNT.url||!CNT.key){box.innerHTML='<div class="empty">آدرس Worker و کلید را در بخش پایین وارد کن.</div>';return;}
@@ -614,25 +639,38 @@
       const r=await cfetch("/stats");
       if(r.status===401){box.innerHTML='<div class="empty">کلید ادمین اشتباه است (۴۰۱).</div>';return;}
       if(!r.ok){box.innerHTML='<div class="empty">خطا ('+r.status+')</div>';return;}
-      const j=await r.json();box.dataset.loaded="1";
+      const j=await r.json();box.dataset.loaded="1";statsData=j;
       $("#k_total").textContent=fa(j.total);$("#k_today").textContent=fa(j.today);$("#k_apps").textContent=fa(j.apps.length);
-      if(!j.apps.length){box.innerHTML='<div class="empty">هنوز کلیکی ثبت نشده.</div>';return;}
-      const max=Math.max(...j.apps.map(a=>a.total),1);box.innerHTML="";
-      j.apps.forEach(a=>{
-        const el=document.createElement("div");el.className="st-item";
-        el.innerHTML=`<div class="st-top"><div class="nm">${esc(a.id)}</div><div class="tot">${fa(a.total)}</div></div>
-          <div class="st-bar"><i style="width:${Math.max(3,Math.round(a.total/max*100))}%"></i></div>
-          <div class="st-meta"><span>امروز: <b>${fa(a.today)}</b> · آخرین: ${ago(a.last_at)}</span><button class="st-del">صفر کردن</button></div>`;
-        el.querySelector(".st-del").onclick=async()=>{
-          if(!confirm("آمار «"+a.id+"» صفر شود؟"))return;
-          const p=await cfetch("/reset?id="+encodeURIComponent(a.id),{method:"POST"}).catch(()=>null);
-          if(p&&p.ok){toast("صفر شد");loadStats();}else toast("خطا");
-        };
-        box.appendChild(el);
-      });
+      $("#k_d7").textContent=fa(j.d7);$("#k_d14").textContent=fa(j.d14);$("#k_d21").textContent=fa(j.d21);$("#k_d28").textContent=fa(j.d28);
+      renderStatsList();
     }catch(e){box.innerHTML='<div class="empty">ارتباط با Worker برقرار نشد.</div>';}
   }
+  function renderStatsList(){
+    const box=$("#statsList");if(!statsData)return;
+    const apps=statsData.apps.slice();
+    if(!apps.length){box.innerHTML='<div class="empty">هنوز کلیکی ثبت نشده.</div>';return;}
+    const val=a=>(statsWin==="total"?a.total:(a[statsWin]||0));
+    apps.sort((x,y)=>val(y)-val(x)||y.total-x.total);
+    const max=Math.max(...apps.map(val),1);box.innerHTML="";
+    apps.forEach(a=>{
+      const el=document.createElement("div");el.className="st-item";
+      el.innerHTML=`<div class="st-top"><div class="nm">${esc(a.id)}</div><div class="tot">${fa(val(a))}</div></div>
+        <div class="st-bar"><i style="width:${Math.max(3,Math.round(val(a)/max*100))}%"></i></div>
+        <div class="st-meta"><span>${WIN_LABEL[statsWin]} · کل: ${fa(a.total)} · آخرین: ${ago(a.last_at)}</span><button class="st-del">صفر کردن</button></div>`;
+      el.querySelector(".st-del").onclick=async()=>{
+        if(!confirm("آمار «"+a.id+"» صفر شود؟"))return;
+        const p=await cfetch("/reset?id="+encodeURIComponent(a.id),{method:"POST"}).catch(()=>null);
+        if(p&&p.ok){toast("صفر شد");loadStats();}else toast("خطا");
+      };
+      box.appendChild(el);
+    });
+  }
   $("#btnStats").addEventListener("click",loadStats);
+  document.querySelectorAll("#winChips .chip").forEach(c=>c.addEventListener("click",()=>{
+    statsWin=c.dataset.win;
+    document.querySelectorAll("#winChips .chip").forEach(x=>x.classList.toggle("active",x===c));
+    renderStatsList();
+  }));
   $("#btnCSave").addEventListener("click",async()=>{
     const url=$("#c_url").value.trim().replace(/\/+$/,"");const key=$("#c_key").value.trim();
     if(!/^https:\/\//.test(url)||!key){cnote("err","آدرس (با https://) و کلید را وارد کن.");return;}

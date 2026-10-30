@@ -23,8 +23,18 @@ function json(data, status = 200) {
 }
 
 // Tehran calendar day, so "today" matches the user's day
+function dayStr(d) {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Tehran" }).format(d);
+}
 function today() {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Tehran" }).format(new Date());
+  return dayStr(new Date());
+}
+// the last `n` Tehran day-strings, most recent first (n<=28 here)
+function lastDays(n) {
+  const now = Date.now();
+  const out = [];
+  for (let k = 0; k < n; k++) out.push(dayStr(new Date(now - k * 86400000)));
+  return out;
 }
 
 function isAdmin(req, env) {
@@ -60,16 +70,40 @@ export default {
 
     if (path === "/stats") {
       if (!isAdmin(req, env)) return json({ ok: false, error: "unauthorized" }, 401);
-      const day = today();
-      const { results } = await env.DB.prepare(
-        `SELECT c.id, c.count AS total, c.first_at, c.last_at,
-                COALESCE(d.count, 0) AS today
-         FROM clicks c LEFT JOIN daily d ON d.id = c.id AND d.day = ?1
-         ORDER BY c.count DESC`
-      ).bind(day).all();
-      const total = results.reduce((s, r) => s + r.total, 0);
-      const todayTotal = results.reduce((s, r) => s + r.today, 0);
-      return json({ ok: true, day, total, today: todayTotal, apps: results });
+      const days28 = lastDays(28);
+      const day = days28[0];
+      // per-window day sets (most-recent-first slices of the 28-day list)
+      const sets = { d7: new Set(days28.slice(0, 7)), d14: new Set(days28.slice(0, 14)),
+                     d21: new Set(days28.slice(0, 21)), d28: new Set(days28) };
+      const cut28 = days28[days28.length - 1];
+
+      // lifetime totals + first/last per app
+      const base = (await env.DB.prepare(
+        `SELECT id, count AS total, first_at, last_at FROM clicks ORDER BY count DESC`
+      ).all()).results;
+      // every daily row within the last 28 days (lexical compare works on YYYY-MM-DD)
+      const dailyRows = (await env.DB.prepare(
+        `SELECT id, day, count FROM daily WHERE day >= ?1`
+      ).bind(cut28).all()).results;
+
+      const win = {};
+      for (const r of base) win[r.id] = { today: 0, d7: 0, d14: 0, d21: 0, d28: 0 };
+      for (const r of dailyRows) {
+        const w = win[r.id] || (win[r.id] = { today: 0, d7: 0, d14: 0, d21: 0, d28: 0 });
+        if (r.day === day) w.today += r.count;
+        if (sets.d7.has(r.day)) w.d7 += r.count;
+        if (sets.d14.has(r.day)) w.d14 += r.count;
+        if (sets.d21.has(r.day)) w.d21 += r.count;
+        if (sets.d28.has(r.day)) w.d28 += r.count;
+      }
+      const apps = base.map((r) => ({ ...r, ...win[r.id] }));
+      const sum = (k) => apps.reduce((s, a) => s + (a[k] || 0), 0);
+      return json({
+        ok: true, day,
+        total: apps.reduce((s, a) => s + a.total, 0),
+        today: sum("today"), d7: sum("d7"), d14: sum("d14"), d21: sum("d21"), d28: sum("d28"),
+        apps,
+      });
     }
 
     if (path === "/reset" && req.method === "POST") {

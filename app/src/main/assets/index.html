@@ -172,12 +172,12 @@
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
   /* help modal */
-  #helpModal{position:fixed;inset:0;z-index:70;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.55);padding:20px}
-  #helpModal .mcard{background:var(--surface);border:1px solid var(--line);border-radius:16px;max-width:460px;width:100%;max-height:82vh;overflow:auto;padding:20px}
-  #helpModal .mhead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:4px}
-  #helpModal h3{font-size:1.05rem}
-  #helpModal .x{border:1px solid var(--line);background:var(--surface-2);color:var(--muted);width:32px;height:32px;border-radius:9px;font-size:16px}
-  #helpModal .msub{color:var(--muted);font-size:.8rem;margin-bottom:14px}
+  .modal{position:fixed;inset:0;z-index:70;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.55);padding:20px}
+  .modal .mcard{background:var(--surface);border:1px solid var(--line);border-radius:16px;max-width:460px;width:100%;max-height:82vh;overflow:auto;padding:20px}
+  .modal .mhead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:4px}
+  .modal h3{font-size:1.05rem}
+  .modal .x{border:1px solid var(--line);background:var(--surface-2);color:var(--muted);width:32px;height:32px;border-radius:9px;font-size:16px}
+  .modal .msub{color:var(--muted);font-size:.8rem;margin-bottom:14px}
   .errrow{background:var(--surface-2);border:1px solid var(--line);border-radius:11px;padding:11px 13px;margin-bottom:9px}
   .errrow .code{font-family:var(--mono);font-weight:800;color:var(--accent);font-size:.82rem}
   .errrow .desc{font-size:.82rem;color:var(--fg);margin-top:4px;line-height:1.85}
@@ -226,8 +226,9 @@
   <button class="dbtn" id="m_manage"><span class="ic">≣</span> مدیریت ریپو</button>
   <button class="dbtn" id="m_stats"><span class="ic">▤</span> آمار کلیک آفلاین</button>
   <div class="dsec">تنظیمات</div>
+  <button class="dbtn" id="m_default"><span class="ic">⭐</span> قالب پیش‌فرضِ مورد جدید</button>
   <button class="dbtn" id="m_theme"><span class="ic">◐</span> تغییر تم (روشن/تاریک)</button>
-  <button class="dbtn" id="m_errors"><span class="ic">?</span> راهنمای خطاها</button>
+  <button class="dbtn" id="m_errors"><span class="ic">▣</span> لاگ و راهنمای خطاها</button>
   <div class="dsec">بیشتر</div>
   <div class="soon">بخش‌های بیشتر به‌زودی اضافه می‌شوند…</div>
   <div class="sep"></div>
@@ -385,10 +386,14 @@
   </div>
 </div>
 
-<div id="helpModal" hidden>
+<div id="helpModal" class="modal" hidden>
   <div class="mcard">
-    <div class="mhead"><h3>راهنمای خطاها</h3><button class="x" id="helpClose" aria-label="بستن">✕</button></div>
-    <p class="msub">وقتی موقع ذخیره یا بارگذاری خطا دیدی، معنی‌اش این است:</p>
+    <div class="mhead"><h3>لاگ و راهنمای خطاها</h3><button class="x" id="helpClose" aria-label="بستن">✕</button></div>
+    <div class="dsec">سلامت برنامه</div>
+    <div id="healthBox"></div>
+    <div class="dsec" style="display:flex;align-items:center;justify-content:space-between">رویدادهای اخیر<button class="st-del" id="logClear">پاک‌کردن لاگ</button></div>
+    <div id="logBox"></div>
+    <div class="dsec">معنی خطاها</div>
     <div class="errrow"><div class="code">401 — توکن نامعتبر</div><div class="desc">توکن اشتباه یا باطل‌شده است. یک توکن جدید بساز و از منو «ساخت/اتصال ریپوی جدید» دوباره وارد شو.</div></div>
     <div class="errrow"><div class="code">403 — دسترسی رد شد</div><div class="desc">توکن اجازهٔ نوشتن ندارد. موقع ساخت توکن در Permissions گزینهٔ <b>Contents</b> را روی <b>Read and write</b> بگذار.</div></div>
     <div class="errrow"><div class="code">404 — پیدا نشد</div><div class="desc">ریپو یا فایل پیدا نشد، یا توکن به این ریپو دسترسی ندارد. اسم دقیق ریپو و دسترسی توکن را بررسی کن.</div></div>
@@ -398,14 +403,30 @@
   </div>
 </div>
 
+<div id="tplModal" class="modal" hidden>
+  <div class="mcard">
+    <div class="mhead"><h3>قالب پیش‌فرضِ مورد جدید</h3><button class="x" id="tplClose" aria-label="بستن">✕</button></div>
+    <p class="msub">فیلدهای فعلیِ ویرایشگر (جز دسته و نام) را به‌عنوان پیش‌فرض ذخیره کن؛ از این به بعد هر «مورد جدید» با همین مقادیر پر می‌شود.</p>
+    <div class="errrow" id="tplState"><div class="desc">—</div></div>
+    <div class="btns" style="margin-top:12px">
+      <button class="btn primary flex" id="tplSave">💾 ثبت فیلدهای فعلی</button>
+      <button class="btn flex" id="tplClear">🗑 پاک‌کردن</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
 (function(){
   "use strict";
   const $=s=>document.querySelector(s);
-  const LS_SET="vpnclick_gh_settings", GH="https://api.github.com";
-  let CONN=(function(){try{return JSON.parse(localStorage.getItem(LS_SET))||{};}catch(e){return {};}})();
+  const LS_SET="vpnclick_gh_settings", LS_LOG="vpnclick_log", LS_TPL="vpnclick_default_tpl", GH="https://api.github.com";
+  // secrets (token / admin key) prefer the native SecureStore bridge; fall back to localStorage
+  function secGet(k){try{if(window.SecureStore&&SecureStore.get){const v=SecureStore.get(k);if(v!==null&&v!==undefined&&v!=="")return v;}}catch(e){}try{return localStorage.getItem(k);}catch(e){return null;}}
+  function secSet(k,v){let ok=false;try{if(window.SecureStore&&SecureStore.set){SecureStore.set(k,v);try{ok=(SecureStore.get(k)===v);}catch(e){}}}catch(e){}if(ok){try{localStorage.removeItem(k);}catch(e){}}else{try{localStorage.setItem(k,v);}catch(e){}}}
+  function secDel(k){try{if(window.SecureStore&&SecureStore.remove)SecureStore.remove(k);}catch(e){}try{localStorage.removeItem(k);}catch(e){}}
+  let CONN=(function(){try{return JSON.parse(secGet(LS_SET))||{};}catch(e){return {};}})();
   let editingSha=null;            // sha of file being edited
   let curCat="__root__";          // selected category in repo mgmt
   let curFiles=[];                // loaded files of current category
@@ -422,8 +443,8 @@
   function toggleTheme(){const c=document.documentElement.getAttribute("data-theme");const d=c?c==="dark":matchMedia("(prefers-color-scheme: dark)").matches;const n=d?"light":"dark";applyTheme(n);lsSet("vpnclick_theme",n);}
 
   let tT;function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(tT);tT=setTimeout(()=>t.classList.remove("show"),1900);}
-  function note(t,m){const n=$("#pushNote");n.className="status-note show "+t;n.textContent=m;}
-  function gnote(t,m){const n=$("#gateNote");n.className="note-box show "+t;n.textContent=m;}
+  function note(t,m){const n=$("#pushNote");n.className="status-note show "+t;n.textContent=m;if(t==="err")logEvent("err",m);}
+  function gnote(t,m){const n=$("#gateNote");n.className="note-box show "+t;n.textContent=m;if(t==="err")logEvent("err",m);}
 
   /* GATE */
   async function doLogin(){
@@ -444,7 +465,7 @@
       if(!r.ok){gnote("err","خطا ("+r.status+").");b.disabled=false;return;}
       const info=await r.json();const full=(info.full_name||(owner+"/"+repoName)).split("/");
       CONN={owner:full[0],repo:full[1],branch:info.default_branch||"main",token:tok};
-      lsSet(LS_SET,CONN);gnote("ok","اتصال برقرار شد ✓");enterApp();
+      secSet(LS_SET,JSON.stringify(CONN));gnote("ok","اتصال برقرار شد ✓");enterApp();
     }catch(e){gnote("err","ارتباط برقرار نشد: "+e.message);}
     b.disabled=false;
   }
@@ -454,7 +475,7 @@
   function updateWho(){const s=`${CONN.owner||""}/${CONN.repo||""}`;const v=s==="/"?"—":s;$("#whoami").textContent=v;$("#d_repo").textContent=v;}
   function enterApp(){$("#gate").hidden=true;$("#app").hidden=false;updateWho();render();}
   function backToGate(clear){
-    if(clear){try{localStorage.removeItem(LS_SET);}catch(e){}CONN={};$("#g_repo").value="";$("#g_token").value="";}
+    if(clear){secDel(LS_SET);CONN={};$("#g_repo").value="";$("#g_token").value="";}
     else{$("#g_repo").value=CONN.repo||"";$("#g_token").value=CONN.token||"";}
     $("#gateNote").className="note-box";$("#app").hidden=true;$("#gate").hidden=false;
   }
@@ -472,7 +493,7 @@
   });
   $("#scrim").addEventListener("click",closeD);
   $("#m_theme").addEventListener("click",toggleTheme);
-  $("#m_errors").addEventListener("click",()=>{closeD();$("#helpModal").hidden=false;});
+  $("#m_errors").addEventListener("click",()=>{closeD();renderHealth();renderLog();$("#helpModal").hidden=false;});
   $("#helpClose").addEventListener("click",()=>{$("#helpModal").hidden=true;});
   $("#helpModal").addEventListener("click",e=>{if(e.target.id==="helpModal")$("#helpModal").hidden=true;});
   $("#m_newrepo").addEventListener("click",()=>{closeD();backToGate(false);});
@@ -508,7 +529,8 @@
   }
   Object.values(F).forEach(el=>el.addEventListener("input",render));
   function newItem(){editingSha=null;$("#editorTitle").textContent="افزودن برنامه";
-    F.name.value="";F.title.value="";F.message.value="";F.okTxt.value="";F.tg.value="";F.useRaw.checked=false;F.okUrlRaw.value="";F.dismissable.checked=false;F.dismissTxt.value="رد";F.status.checked=true;F.onlineCount.checked=false;render();}
+    F.name.value="";F.title.value="";F.message.value="";F.okTxt.value="";F.tg.value="";F.useRaw.checked=false;F.okUrlRaw.value="";F.dismissable.checked=false;F.dismissTxt.value="رد";F.status.checked=true;F.onlineCount.checked=false;
+    applyTpl(getTpl());render();}
   $("#btnReset").addEventListener("click",()=>{newItem();toast("مورد جدید");});
   function loadConfigIntoEditor(catName,name,obj,sha){
     editingSha=sha||null;$("#editorTitle").textContent="ویرایش: "+((catName&&catName!=="__root__")?catName+"/":"")+name;
@@ -694,9 +716,9 @@
 
   /* OFFLINE CLICK STATS (Cloudflare Worker + D1) */
   const LS_CNT="vpnclick_counter";
-  let CNT=(function(){try{return JSON.parse(localStorage.getItem(LS_CNT))||{};}catch(e){return {};}})();
+  let CNT=(function(){try{return JSON.parse(secGet(LS_CNT))||{};}catch(e){return {};}})();
   $("#c_url").value=CNT.url||"";$("#c_key").value=CNT.key||"";
-  function cnote(t,m){const n=$("#cNote");n.className="status-note show "+t;n.textContent=m;}
+  function cnote(t,m){const n=$("#cNote");n.className="status-note show "+t;n.textContent=m;if(t==="err")logEvent("err",m);}
   const esc=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
   const fa=n=>Number(n||0).toLocaleString("fa-IR");
   function ago(ms){if(!ms)return "—";const m=Math.floor((Date.now()-ms)/60000);
@@ -771,13 +793,54 @@
   $("#btnCSave").addEventListener("click",async()=>{
     const url=$("#c_url").value.trim().replace(/\/+$/,"");const key=$("#c_key").value.trim();
     if(!/^https:\/\//.test(url)||!key){cnote("err","آدرس (با https://) و کلید را وارد کن.");return;}
-    CNT={url,key};lsSet(LS_CNT,CNT);cnote("info","در حال بررسی…");
+    CNT={url,key};secSet(LS_CNT,JSON.stringify(CNT));cnote("info","در حال بررسی…");
     try{const r=await cfetch("/stats");
       if(r.ok){cnote("ok","اتصال برقرار شد ✓");loadStats();}
       else if(r.status===401)cnote("err","کلید ادمین اشتباه است.");
       else cnote("err","خطا ("+r.status+") — آدرس Worker را بررسی کن.");
     }catch(e){cnote("err","ارتباط برقرار نشد — آدرس را بررسی کن.");}
   });
+
+  /* LOG + HEALTH + DEFAULT TEMPLATE (v1.8) */
+  function logEvent(lvl,msg){try{const a=JSON.parse(localStorage.getItem(LS_LOG)||"[]");a.push({t:Date.now(),lvl:lvl,msg:String(msg).slice(0,300)});while(a.length>60)a.shift();localStorage.setItem(LS_LOG,JSON.stringify(a));}catch(e){}}
+  window.addEventListener("error",ev=>{try{logEvent("err","خطای برنامه: "+((ev&&ev.message)||"نامشخص"));}catch(e){}});
+  window.addEventListener("unhandledrejection",ev=>{try{logEvent("err","خطای ناگرفته: "+((ev&&ev.reason&&ev.reason.message)||(ev&&ev.reason)||"نامشخص"));}catch(e){}});
+  const ERR_HELP=[[/401/,"توکن نامعتبر یا باطل‌شده."],[/403/,"توکن اجازهٔ نوشتن ندارد (Contents: Read and write)."],[/404/,"ریپو/فایل پیدا نشد یا توکن دسترسی ندارد."],[/409|422|تعارض/,"تعارض نسخه؛ حالا خودکار حل می‌شود. اگر دیدی «تازه‌سازی» کن."],[/429/,"محدودیت نرخ گیت‌هاب؛ چند دقیقه صبر کن."],[/ارتباط|شبکه|network/i,"مشکل اینترنت یا دسترسی به گیت‌هاب."]];
+  function explainMsg(m){for(const p of ERR_HELP)if(p[0].test(m))return p[1];return "";}
+  function fmtTime(t){try{return new Date(t).toLocaleString("fa-IR");}catch(e){return "";}}
+  function renderHealth(){
+    const sec=!!(window.SecureStore&&SecureStore.available&&SecureStore.available());
+    const rows=[["اتصال به ریپو",hasLogin()?("متصل: "+CONN.owner+"/"+CONN.repo):"وارد نشده‌ای"],
+      ["شمارنده (Worker)",(CNT&&CNT.url)?"تنظیم‌شده":"تنظیم نشده"],
+      ["ذخیره‌سازی امن",sec?"فعال (در خودِ اندروید)":"localStorage (نسخهٔ قدیمی اپ)"],
+      ["قالب پیش‌فرض",getTpl()?"تنظیم‌شده":"ندارد"]];
+    $("#healthBox").innerHTML=rows.map(r=>'<div class="errrow"><div class="code">'+esc(r[0])+'</div><div class="desc">'+esc(r[1])+'</div></div>').join("");
+  }
+  function renderLog(){
+    let a=[];try{a=JSON.parse(localStorage.getItem(LS_LOG)||"[]");}catch(e){}
+    const box=$("#logBox");
+    if(!a.length){box.innerHTML='<div class="empty" style="padding:14px">هنوز رویدادی ثبت نشده 🎉</div>';return;}
+    box.innerHTML=a.slice().reverse().map(e=>{const ex=e.lvl==="err"?explainMsg(e.msg):"";
+      return '<div class="errrow"><div class="code" style="color:'+(e.lvl==="err"?"var(--danger)":"var(--muted)")+'">'+fmtTime(e.t)+'</div><div class="desc">'+esc(e.msg)+(ex?'<br><span style="color:var(--muted)">↳ '+esc(ex)+'</span>':"")+'</div></div>';}).join("");
+  }
+  $("#logClear").addEventListener("click",()=>{try{localStorage.removeItem(LS_LOG);}catch(e){}renderLog();toast("لاگ پاک شد");});
+
+  function getTpl(){try{return JSON.parse(localStorage.getItem(LS_TPL));}catch(e){return null;}}
+  function applyTpl(t){if(!t)return;
+    F.title.value=t.title||"";F.message.value=t.message||"";F.okTxt.value=t.okTxt||"";
+    F.useRaw.checked=!!t.useRaw;F.okUrlRaw.value=t.okUrlRaw||"";F.tg.value=t.tg||"";
+    F.dismissable.checked=!!t.dismissable;F.dismissTxt.value=t.dismissTxt||"رد";
+    F.status.checked=t.status!==false;F.onlineCount.checked=!!t.onlineCount;}
+  function renderTplState(){const t=getTpl();$("#tplState").querySelector(".desc").textContent=t?("پیش‌فرض تنظیم شده — عنوان: «"+(t.title||"بدون عنوان")+"»"):"هنوز پیش‌فرضی ثبت نشده.";}
+  $("#m_default").addEventListener("click",()=>{closeD();renderTplState();$("#tplModal").hidden=false;});
+  $("#tplClose").addEventListener("click",()=>{$("#tplModal").hidden=true;});
+  $("#tplModal").addEventListener("click",e=>{if(e.target.id==="tplModal")$("#tplModal").hidden=true;});
+  $("#tplSave").addEventListener("click",()=>{const t={title:F.title.value,message:F.message.value,okTxt:F.okTxt.value,useRaw:F.useRaw.checked,okUrlRaw:F.okUrlRaw.value,tg:F.tg.value,dismissable:F.dismissable.checked,dismissTxt:F.dismissTxt.value,status:F.status.checked,onlineCount:F.onlineCount.checked};try{localStorage.setItem(LS_TPL,JSON.stringify(t));}catch(e){}renderTplState();toast("قالب پیش‌فرض ذخیره شد ✓");});
+  $("#tplClear").addEventListener("click",()=>{try{localStorage.removeItem(LS_TPL);}catch(e){}renderTplState();toast("قالب پیش‌فرض پاک شد");});
+
+  /* migrate existing secrets off localStorage into SecureStore (safe: verified, non-destructive on failure) */
+  try{if(CONN&&CONN.token)secSet(LS_SET,JSON.stringify(CONN));}catch(e){}
+  try{if(CNT&&(CNT.url||CNT.key))secSet(LS_CNT,JSON.stringify(CNT));}catch(e){}
 
   /* init */
   if(hasLogin())enterApp();else $("#gate").hidden=false;

@@ -4,9 +4,9 @@
   /* Single-screen app shell: top bar + tab strip + one scrolling content area.
      Dark-first — deep slate surfaces, telegram-blue accent, green "on" status. */
   :root{
-    --bg:#0e141c; --surface:#17212e; --surface-2:#1e2b3a; --line:#2a3a4d;
-    --fg:#e8eef5; --muted:#8ba0b6; --accent:#2ea6ff; --accent-ink:#04223b;
-    --ok:#32c871; --warn:#ffb23e; --danger:#ff5d5d;
+    --bg:#0a0e15; --surface:#131a24; --surface-2:#1a232f; --line:#27323f;
+    --fg:#e7eef6; --muted:#8193a8; --accent:#2e9bf0; --accent-ink:#04223b;
+    --ok:#2fbf6e; --warn:#f0a73a; --danger:#f05d5d;
     --radius:14px; --gap:14px; --bar:58px;
     --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
     --ui:"Vazirmatn","Segoe UI",Tahoma,system-ui,sans-serif;
@@ -14,15 +14,15 @@
   }
   @media (prefers-color-scheme: light){
     :root:not([data-theme="dark"]){
-      --bg:#eef3f9; --surface:#ffffff; --surface-2:#f3f7fc; --line:#dde6f0;
-      --fg:#13202e; --muted:#5c7289; --accent:#1b8fe0; --accent-ink:#ffffff;
-      --ok:#17a357; --warn:#c77700; --danger:#d63b3b; color-scheme:light;
+      --bg:#f0f4f9; --surface:#ffffff; --surface-2:#f4f7fb; --line:#e0e7f0;
+      --fg:#111c29; --muted:#5a6f85; --accent:#1684d6; --accent-ink:#ffffff;
+      --ok:#15a053; --warn:#bf7400; --danger:#d43b3b; color-scheme:light;
     }
   }
   :root[data-theme="light"]{
-    --bg:#eef3f9; --surface:#ffffff; --surface-2:#f3f7fc; --line:#dde6f0;
-    --fg:#13202e; --muted:#5c7289; --accent:#1b8fe0; --accent-ink:#ffffff;
-    --ok:#17a357; --warn:#c77700; --danger:#d63b3b; color-scheme:light;
+    --bg:#f0f4f9; --surface:#ffffff; --surface-2:#f4f7fb; --line:#e0e7f0;
+    --fg:#111c29; --muted:#5a6f85; --accent:#1684d6; --accent-ink:#ffffff;
+    --ok:#15a053; --warn:#bf7400; --danger:#d43b3b; color-scheme:light;
   }
 
   *{box-sizing:border-box}
@@ -220,13 +220,14 @@
 <div id="scrim"></div>
 <nav id="drawer" aria-label="منو">
   <div class="dhead"><div class="l">گ</div><h3>منو</h3></div>
+  <div class="conn" id="drawerClock" style="text-align:center"><div class="k" id="dc_date">—</div><div class="v" id="dc_time" style="font-size:1.2rem;letter-spacing:1px;color:var(--accent);direction:ltr">—</div></div>
   <div class="conn"><div class="k">متصل به ریپو</div><div class="v" id="d_repo">—</div></div>
   <div class="dsec">ریپو</div>
   <button class="dbtn" id="m_newrepo"><span class="ic">＋</span> ساخت / اتصال ریپوی جدید</button>
   <button class="dbtn" id="m_manage"><span class="ic">≣</span> مدیریت ریپو</button>
   <button class="dbtn" id="m_stats"><span class="ic">▤</span> آمار کلیک آفلاین</button>
   <div class="dsec">تنظیمات</div>
-  <button class="dbtn" id="m_default"><span class="ic">⭐</span> قالب پیش‌فرضِ مورد جدید</button>
+  <button class="dbtn" id="m_default"><span class="ic">⭐</span> دیالوگ پیش‌فرض</button>
   <button class="dbtn" id="m_theme"><span class="ic">◐</span> تغییر تم (روشن/تاریک)</button>
   <button class="dbtn" id="m_errors"><span class="ic">▣</span> لاگ و راهنمای خطاها</button>
   <div class="dsec">بیشتر</div>
@@ -263,6 +264,10 @@
             <input type="text" id="app_name" placeholder="مثلاً CloverVPN 1.2.3"></div>
         </div>
         <p class="hint">مسیر فایل: <code id="filename_preview">app.txt</code></p>
+        <div class="toggle" style="margin-top:4px">
+          <div class="lbl">دیالوگ پیش‌فرض<small>روشن کن تا فیلدهای زیر از دیالوگ پیش‌فرضِ تنظیمات پر شوند</small></div>
+          <label class="sw"><input type="checkbox" id="f_useDefault"><span class="track"></span><span class="knob"></span></label>
+        </div>
         <div class="sep"></div>
         <div class="field"><label>عنوان دیالوگ (title)</label><input type="text" id="f_title" placeholder="کاربر گرامی"></div>
         <div class="field"><label>متن پیام (message)</label><textarea id="f_message" placeholder="جهت استفاده از این Vpn در کانال تلگرام ما عضو شوید ♥️"></textarea></div>
@@ -405,11 +410,20 @@
 
 <div id="tplModal" class="modal" hidden>
   <div class="mcard">
-    <div class="mhead"><h3>قالب پیش‌فرضِ مورد جدید</h3><button class="x" id="tplClose" aria-label="بستن">✕</button></div>
-    <p class="msub">فیلدهای فعلیِ ویرایشگر (جز دسته و نام) را به‌عنوان پیش‌فرض ذخیره کن؛ از این به بعد هر «مورد جدید» با همین مقادیر پر می‌شود.</p>
-    <div class="errrow" id="tplState"><div class="desc">—</div></div>
-    <div class="btns" style="margin-top:12px">
-      <button class="btn primary flex" id="tplSave">💾 ثبت فیلدهای فعلی</button>
+    <div class="mhead"><h3>دیالوگ پیش‌فرض</h3><button class="x" id="tplClose" aria-label="بستن">✕</button></div>
+    <p class="msub">این مقادیر، پیش‌فرضِ «مورد جدید» هستند. در ویرایشگر با روشن‌کردنِ تیکِ «دیالوگ پیش‌فرض» همین‌ها پر می‌شوند (جز دسته و نام).</p>
+    <div class="field"><label>عنوان (title)</label><input type="text" id="t_title" placeholder="کاربر گرامی"></div>
+    <div class="field"><label>پیام (message)</label><textarea id="t_message" placeholder="در کانال تلگرام ما عضو شوید ♥️"></textarea></div>
+    <div class="row">
+      <div class="field"><label>متن دکمه (okTxt)</label><input type="text" id="t_okTxt" placeholder="عضویت در تلگرام 🟢"></div>
+      <div class="field"><label>یوزرنیم تلگرام</label><input type="text" id="t_tg" placeholder="Vpn_irany"></div>
+    </div>
+    <div class="field"><label>متن دکمه رد (dismissTxt)</label><input type="text" id="t_dismissTxt" placeholder="رد"></div>
+    <div class="toggle" style="margin-bottom:10px"><div class="lbl">نمایش دکمه رد</div><label class="sw"><input type="checkbox" id="t_dismissable"><span class="track"></span><span class="knob"></span></label></div>
+    <div class="toggle" style="margin-bottom:10px"><div class="lbl">وضعیت روشن (status)</div><label class="sw"><input type="checkbox" id="t_status" checked><span class="track"></span><span class="knob"></span></label></div>
+    <div class="toggle"><div class="lbl">شمارش کلیک آنلاین</div><label class="sw"><input type="checkbox" id="t_onlineCount"><span class="track"></span><span class="knob"></span></label></div>
+    <div class="btns" style="margin-top:14px">
+      <button class="btn primary flex" id="tplSave">💾 ذخیره</button>
       <button class="btn flex" id="tplClear">🗑 پاک‌کردن</button>
     </div>
   </div>
@@ -428,6 +442,7 @@
   function secDel(k){try{if(window.SecureStore&&SecureStore.remove)SecureStore.remove(k);}catch(e){}try{localStorage.removeItem(k);}catch(e){}}
   let CONN=(function(){try{return JSON.parse(secGet(LS_SET))||{};}catch(e){return {};}})();
   let editingSha=null;            // sha of file being edited
+  let editingCreated=null;        // creation date (ISO) of the file being edited, preserved across saves
   let curCat="__root__";          // selected category in repo mgmt
   let curFiles=[];                // loaded files of current category
 
@@ -436,6 +451,8 @@
   function b64e(s){const b=new TextEncoder().encode(s);let o="";b.forEach(x=>o+=String.fromCharCode(x));return btoa(o);}
   function b64d(b){try{const bin=atob((b||"").replace(/\n/g,""));return new TextDecoder().decode(Uint8Array.from(bin,c=>c.charCodeAt(0)));}catch(e){return "";}}
   const branch=()=>CONN.branch||"main";
+  function todayISO(){try{return new Date().toISOString().slice(0,10);}catch(e){return "";}}
+  function faDate(iso){try{return new Intl.DateTimeFormat("fa-IR-u-ca-persian",{year:"numeric",month:"long",day:"numeric"}).format(new Date(iso));}catch(e){return "";}}
 
   /* theme */
   function applyTheme(t){if(t)document.documentElement.setAttribute("data-theme",t);else document.documentElement.removeAttribute("data-theme");}
@@ -515,7 +532,7 @@
   function filePath(){const c=cat();return (c?c+"/":"")+baseName();}
   function okUrl(){if(F.useRaw.checked)return F.okUrlRaw.value.trim();const d=F.tg.value.trim().replace(/^@/,"");return d?("tg://resolve?domain="+d):"";}
   function rawUrl(){if(!CONN.owner||!CONN.repo)return "";return `https://raw.githubusercontent.com/${CONN.owner}/${CONN.repo}/refs/heads/${branch()}/${filePath().split("/").map(encodeURIComponent).join("/")}`;}
-  function configObj(){const o={title:F.title.value,message:F.message.value,dismissable:F.dismissable.checked,dismissTxt:F.dismissTxt.value||"رد",okTxt:F.okTxt.value,okUrl:okUrl(),status:F.status.checked?"ok":"off"};if(F.onlineCount.checked&&CNT&&CNT.url)o.counter=CNT.url.replace(/\/+$/,"");return o;}
+  function configObj(){const o={title:F.title.value,message:F.message.value,dismissable:F.dismissable.checked,dismissTxt:F.dismissTxt.value||"رد",okTxt:F.okTxt.value,okUrl:okUrl(),status:F.status.checked?"ok":"off"};if(F.onlineCount.checked&&CNT&&CNT.url)o.counter=CNT.url.replace(/\/+$/,"");o.created=editingCreated||todayISO();return o;}
   function configJson(){return JSON.stringify(configObj());}
   function hl(o){const e=s=>s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");let out="{";const k=Object.keys(o);k.forEach((key,i)=>{const v=o[key];out+=`<span class="tok-key">"${e(key)}"</span>:`+(typeof v==="boolean"?`<span class="tok-bool">${v}</span>`:`<span class="tok-str">"${e(String(v))}"</span>`);if(i<k.length-1)out+=",";});return out+"}";}
   function render(){
@@ -528,12 +545,12 @@
     $("#pv_ok").textContent=o.okTxt||"عضویت";const no=$("#pv_no");no.textContent=o.dismissTxt||"رد";no.style.display=o.dismissable?"":"none";
   }
   Object.values(F).forEach(el=>el.addEventListener("input",render));
-  function newItem(){editingSha=null;$("#editorTitle").textContent="افزودن برنامه";
+  function newItem(){editingSha=null;editingCreated=null;$("#f_useDefault").checked=false;$("#editorTitle").textContent="افزودن برنامه";
     F.name.value="";F.title.value="";F.message.value="";F.okTxt.value="";F.tg.value="";F.useRaw.checked=false;F.okUrlRaw.value="";F.dismissable.checked=false;F.dismissTxt.value="رد";F.status.checked=true;F.onlineCount.checked=false;
-    applyTpl(getTpl());render();}
+    render();}
   $("#btnReset").addEventListener("click",()=>{newItem();toast("مورد جدید");});
   function loadConfigIntoEditor(catName,name,obj,sha){
-    editingSha=sha||null;$("#editorTitle").textContent="ویرایش: "+((catName&&catName!=="__root__")?catName+"/":"")+name;
+    editingSha=sha||null;editingCreated=obj.created||null;$("#f_useDefault").checked=false;$("#editorTitle").textContent="ویرایش: "+((catName&&catName!=="__root__")?catName+"/":"")+name;
     F.cat.value=(catName&&catName!=="__root__")?catName:"";
     F.name.value=name.replace(/\.txt$/i,"");
     F.title.value=obj.title||"";F.message.value=obj.message||"";F.okTxt.value=obj.okTxt||"";
@@ -681,7 +698,7 @@
       const el=document.createElement("div");el.className="repo-item";
       el.innerHTML=`<button class="chk ${on?"on":""}" title="روشن/خاموش">${on?"✓":""}</button>
         <div class="info"><div class="nm">${it.name.replace(/\.txt$/i,"").replace(/</g,"&lt;")}</div>
-        <div class="meta">${(it.cat&&it.cat!=="__root__")?('<span style="color:var(--accent)">'+it.cat.replace(/</g,"&lt;")+'</span> · '):""}${it.bad?"فایل قابل‌خواندن نیست":((""+(it.obj.title||"بدون عنوان")).replace(/</g,"&lt;"))}</div></div>
+        <div class="meta">${(it.cat&&it.cat!=="__root__")?('<span style="color:var(--accent)">'+it.cat.replace(/</g,"&lt;")+'</span> · '):""}${it.bad?"فایل قابل‌خواندن نیست":((""+(it.obj.title||"بدون عنوان")).replace(/</g,"&lt;")+((it.obj&&it.obj.created)?(' · <span style="color:var(--muted)">ساخت: '+faDate(it.obj.created)+'</span>'):""))}</div></div>
         <button class="edit" title="ویرایش">✎</button>
         <button class="del" title="حذف">🗑</button>`;
       const chk=el.querySelector(".chk");
@@ -813,7 +830,7 @@
     const rows=[["اتصال به ریپو",hasLogin()?("متصل: "+CONN.owner+"/"+CONN.repo):"وارد نشده‌ای"],
       ["شمارنده (Worker)",(CNT&&CNT.url)?"تنظیم‌شده":"تنظیم نشده"],
       ["ذخیره‌سازی امن",sec?"فعال (در خودِ اندروید)":"localStorage (نسخهٔ قدیمی اپ)"],
-      ["قالب پیش‌فرض",getTpl()?"تنظیم‌شده":"ندارد"]];
+      ["دیالوگ پیش‌فرض",getTpl()?"تنظیم‌شده":"ندارد"]];
     $("#healthBox").innerHTML=rows.map(r=>'<div class="errrow"><div class="code">'+esc(r[0])+'</div><div class="desc">'+esc(r[1])+'</div></div>').join("");
   }
   function renderLog(){
@@ -826,17 +843,25 @@
   $("#logClear").addEventListener("click",()=>{try{localStorage.removeItem(LS_LOG);}catch(e){}renderLog();toast("لاگ پاک شد");});
 
   function getTpl(){try{return JSON.parse(localStorage.getItem(LS_TPL));}catch(e){return null;}}
+  const TF={title:$("#t_title"),message:$("#t_message"),okTxt:$("#t_okTxt"),tg:$("#t_tg"),dismissTxt:$("#t_dismissTxt"),dismissable:$("#t_dismissable"),status:$("#t_status"),onlineCount:$("#t_onlineCount")};
+  function fillTplModal(){const t=getTpl()||{};TF.title.value=t.title||"";TF.message.value=t.message||"";TF.okTxt.value=t.okTxt||"";TF.tg.value=t.tg||"";TF.dismissTxt.value=t.dismissTxt||"رد";TF.dismissable.checked=!!t.dismissable;TF.status.checked=t.status!==false;TF.onlineCount.checked=!!t.onlineCount;}
+  // fill the EDITOR from the saved default (keeps دسته/نام)
   function applyTpl(t){if(!t)return;
     F.title.value=t.title||"";F.message.value=t.message||"";F.okTxt.value=t.okTxt||"";
-    F.useRaw.checked=!!t.useRaw;F.okUrlRaw.value=t.okUrlRaw||"";F.tg.value=t.tg||"";
+    F.useRaw.checked=false;F.okUrlRaw.value="";F.tg.value=t.tg||"";
     F.dismissable.checked=!!t.dismissable;F.dismissTxt.value=t.dismissTxt||"رد";
-    F.status.checked=t.status!==false;F.onlineCount.checked=!!t.onlineCount;}
-  function renderTplState(){const t=getTpl();$("#tplState").querySelector(".desc").textContent=t?("پیش‌فرض تنظیم شده — عنوان: «"+(t.title||"بدون عنوان")+"»"):"هنوز پیش‌فرضی ثبت نشده.";}
-  $("#m_default").addEventListener("click",()=>{closeD();renderTplState();$("#tplModal").hidden=false;});
+    F.status.checked=t.status!==false;F.onlineCount.checked=!!t.onlineCount;render();}
+  $("#m_default").addEventListener("click",()=>{closeD();fillTplModal();$("#tplModal").hidden=false;});
   $("#tplClose").addEventListener("click",()=>{$("#tplModal").hidden=true;});
   $("#tplModal").addEventListener("click",e=>{if(e.target.id==="tplModal")$("#tplModal").hidden=true;});
-  $("#tplSave").addEventListener("click",()=>{const t={title:F.title.value,message:F.message.value,okTxt:F.okTxt.value,useRaw:F.useRaw.checked,okUrlRaw:F.okUrlRaw.value,tg:F.tg.value,dismissable:F.dismissable.checked,dismissTxt:F.dismissTxt.value,status:F.status.checked,onlineCount:F.onlineCount.checked};try{localStorage.setItem(LS_TPL,JSON.stringify(t));}catch(e){}renderTplState();toast("قالب پیش‌فرض ذخیره شد ✓");});
-  $("#tplClear").addEventListener("click",()=>{try{localStorage.removeItem(LS_TPL);}catch(e){}renderTplState();toast("قالب پیش‌فرض پاک شد");});
+  $("#tplSave").addEventListener("click",()=>{const t={title:TF.title.value,message:TF.message.value,okTxt:TF.okTxt.value,tg:TF.tg.value,dismissTxt:TF.dismissTxt.value,dismissable:TF.dismissable.checked,status:TF.status.checked,onlineCount:TF.onlineCount.checked};try{localStorage.setItem(LS_TPL,JSON.stringify(t));}catch(e){}$("#tplModal").hidden=true;toast("دیالوگ پیش‌فرض ذخیره شد ✓");});
+  $("#tplClear").addEventListener("click",()=>{try{localStorage.removeItem(LS_TPL);}catch(e){}fillTplModal();toast("دیالوگ پیش‌فرض پاک شد");});
+  $("#f_useDefault").addEventListener("change",function(){if(this.checked){const t=getTpl();if(!t){this.checked=false;toast("اول دیالوگ پیش‌فرض را در منو تنظیم کن");return;}applyTpl(t);toast("از دیالوگ پیش‌فرض پر شد");}});
+  function tickClock(){try{const d=new Date();const de=$("#dc_date"),te=$("#dc_time");if(!de&&!te)return;
+    if(de)de.textContent=new Intl.DateTimeFormat("fa-IR-u-ca-persian",{timeZone:"Asia/Tehran",weekday:"long",year:"numeric",month:"long",day:"numeric"}).format(d);
+    if(te)te.textContent=new Intl.DateTimeFormat("fa-IR",{timeZone:"Asia/Tehran",hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:false}).format(d);
+  }catch(e){}}
+  tickClock();setInterval(tickClock,1000);
 
   /* migrate existing secrets off localStorage into SecureStore (safe: verified, non-destructive on failure) */
   try{if(CONN&&CONN.token)secSet(LS_SET,JSON.stringify(CONN));}catch(e){}

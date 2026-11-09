@@ -698,7 +698,7 @@
       const el=document.createElement("div");el.className="repo-item";
       el.innerHTML=`<button class="chk ${on?"on":""}" title="روشن/خاموش">${on?"✓":""}</button>
         <div class="info"><div class="nm">${it.name.replace(/\.txt$/i,"").replace(/</g,"&lt;")}</div>
-        <div class="meta">${(it.cat&&it.cat!=="__root__")?('<span style="color:var(--accent)">'+it.cat.replace(/</g,"&lt;")+'</span> · '):""}${it.bad?"فایل قابل‌خواندن نیست":((""+(it.obj.title||"بدون عنوان")).replace(/</g,"&lt;")+((it.obj&&it.obj.created)?(' · <span style="color:var(--muted)">ساخت: '+faDate(it.obj.created)+'</span>'):""))}</div></div>
+        <div class="meta">${[(it.cat&&it.cat!=="__root__")?('<span style="color:var(--accent)">'+it.cat.replace(/</g,"&lt;")+'</span>'):"",it.bad?"فایل قابل‌خواندن نیست":((it.obj&&it.obj.created)?('<span style="color:var(--muted)">ساخت: '+faDate(it.obj.created)+'</span>'):"")].filter(Boolean).join(" · ")}</div></div>
         <button class="edit" title="ویرایش">✎</button>
         <button class="del" title="حذف">🗑</button>`;
       const chk=el.querySelector(".chk");

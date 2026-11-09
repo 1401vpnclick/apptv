@@ -117,6 +117,26 @@ export default {
       return json({ ok: true });
     }
 
+    // Config proxy — serves a GitHub raw file through Cloudflare, for clients where
+    // raw.githubusercontent.com is blocked (e.g. Iran, before a VPN is connected).
+    //   GET /c/<owner>/<repo>/refs/heads/<branch>/<path>  ->  raw.githubusercontent.com/<same>
+    // i.e. take any raw URL and replace the host + "/" with this Worker + "/c/".
+    if (path.startsWith("/c/")) {
+      const rest = path.slice(3); // keeps percent-encoding (e.g. %20 for spaces)
+      if (!rest || rest.includes("..")) return json({ ok: false, error: "bad path" }, 400);
+      const raw = "https://raw.githubusercontent.com/" + rest;
+      try {
+        const r = await fetch(raw, { headers: { "User-Agent": "cf-config-proxy" } });
+        const body = await r.text();
+        return new Response(body, {
+          status: r.status,
+          headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", ...CORS },
+        });
+      } catch (e) {
+        return json({ ok: false, error: "upstream fetch failed" }, 502);
+      }
+    }
+
     if (path === "/") return json({ ok: true, service: "offline-counter" });
     return json({ ok: false, error: "not found" }, 404);
   },

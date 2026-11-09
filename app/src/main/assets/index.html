@@ -230,6 +230,7 @@
   <button class="dbtn" id="m_default"><span class="ic">⭐</span> دیالوگ پیش‌فرض</button>
   <button class="dbtn" id="m_theme"><span class="ic">◐</span> تغییر تم (روشن/تاریک)</button>
   <button class="dbtn" id="m_errors"><span class="ic">▣</span> لاگ و راهنمای خطاها</button>
+  <button class="dbtn" id="m_filter"><span class="ic">🛡</span> چکر فیلتر (تست باز شدن لینک)</button>
   <div class="dsec">بیشتر</div>
   <div class="soon">بخش‌های بیشتر به‌زودی اضافه می‌شوند…</div>
   <div class="sep"></div>
@@ -303,14 +304,18 @@
         </div>
         <div class="btns" style="margin-top:0">
           <button class="btn ghost flex" id="btnCopyTxt">📋 کپی JSON</button>
-          <button class="btn ghost flex" id="copyLink">🔗 کپی لینک</button>
+          <button class="btn ghost flex" id="copyLink">🔗 لینک گیت‌هاب</button>
+          <button class="btn ghost flex" id="copyLinkCf">🛡 لینک بدون فیلتر</button>
         </div>
         <div class="status-note" id="pushNote"></div>
       </div>
       <div class="card">
         <h2><span class="ic">◇</span> پیش‌نمایش</h2>
         <pre class="json" id="jsonOut"></pre>
+        <p class="hint" style="margin:10px 0 2px">🔗 لینک گیت‌هاب <span style="color:var(--muted)">(فقط با فیلترشکن باز می‌شود)</span>:</p>
         <div class="urlbox"><code id="rawLink">—</code></div>
+        <p class="hint" style="margin:10px 0 2px">🛡 لینک بدون فیلتر <span style="color:var(--ok)">(این را در SRC اپ بگذار)</span>:</p>
+        <div class="urlbox"><code id="cfLink">—</code></div>
         <div class="phone" style="margin-top:12px">
           <div class="dlg">
             <div class="dtitle" id="pv_title">کاربر گرامی</div>
@@ -429,6 +434,22 @@
   </div>
 </div>
 
+<div id="fcModal" class="modal" hidden>
+  <div class="mcard">
+    <div class="mhead"><h3>چکر فیلتر</h3><button class="x" id="fcClose" aria-label="بستن">✕</button></div>
+    <p class="msub">یک لینک بده تا بررسی شود از همین دستگاه و با وضعیت فعلیِ اینترنت (با/بدون فیلترشکن) باز می‌شود یا نه. «باز شد» یعنی سرور پاسخ داد و لینک فیلتر نیست.</p>
+    <div class="field"><input type="text" id="fc_url" placeholder="https://..." autocomplete="off" autocapitalize="none" spellcheck="false" style="direction:ltr;text-align:left"></div>
+    <div class="btns"><button class="btn primary flex" id="fcCheck">بررسی لینک</button></div>
+    <div class="status-note" id="fcNote"></div>
+    <div class="sep"></div>
+    <p class="msub" style="margin-bottom:8px">تست سریع لینک‌های موردی که الان در ویرایشگر باز است:</p>
+    <div class="btns">
+      <button class="btn flex" id="fcRaw">🔗 لینک گیت‌هاب</button>
+      <button class="btn flex" id="fcCf">🛡 لینک بدون فیلتر</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -532,6 +553,10 @@
   function filePath(){const c=cat();return (c?c+"/":"")+baseName();}
   function okUrl(){if(F.useRaw.checked)return F.okUrlRaw.value.trim();const d=F.tg.value.trim().replace(/^@/,"");return d?("tg://resolve?domain="+d):"";}
   function rawUrl(){if(!CONN.owner||!CONN.repo)return "";return `https://raw.githubusercontent.com/${CONN.owner}/${CONN.repo}/refs/heads/${branch()}/${filePath().split("/").map(encodeURIComponent).join("/")}`;}
+  // Cloudflare-proxied link: same path, served through the Worker /c/ endpoint (reachable in Iran without a VPN)
+  function cfBase(){return (typeof CNT!=="undefined"&&CNT&&CNT.url)?CNT.url.replace(/\/+$/,""):"";}
+  function toCf(rawU){const b=cfBase();if(!b||!rawU)return "";return b+"/c/"+rawU.replace(/^https:\/\/raw\.githubusercontent\.com\//,"");}
+  function cfUrl(){return toCf(rawUrl());}
   function configObj(){const o={title:F.title.value,message:F.message.value,dismissable:F.dismissable.checked,dismissTxt:F.dismissTxt.value||"رد",okTxt:F.okTxt.value,okUrl:okUrl(),status:F.status.checked?"ok":"off"};if(F.onlineCount.checked&&CNT&&CNT.url)o.counter=CNT.url.replace(/\/+$/,"");o.created=editingCreated||todayISO();return o;}
   function configJson(){return JSON.stringify(configObj());}
   function hl(o){const e=s=>s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");let out="{";const k=Object.keys(o);k.forEach((key,i)=>{const v=o[key];out+=`<span class="tok-key">"${e(key)}"</span>:`+(typeof v==="boolean"?`<span class="tok-bool">${v}</span>`:`<span class="tok-str">"${e(String(v))}"</span>`);if(i<k.length-1)out+=",";});return out+"}";}
@@ -541,6 +566,7 @@
     $("#rawUrlField").hidden=!F.useRaw.checked;$("#dismissTxtField").hidden=!F.dismissable.checked;
     $("#onlineCountHint").hidden=!(F.onlineCount.checked&&!(CNT&&CNT.url));
     const o=configObj();$("#jsonOut").innerHTML=hl(o);$("#rawLink").textContent=rawUrl()||"—";
+    const cfEl=$("#cfLink");if(cfEl){const cf=cfUrl();cfEl.textContent=cf||((typeof CNT!=="undefined"&&CNT&&CNT.url)?"—":"اول آدرس Worker را در تب «آمار» ذخیره کن");}
     $("#pv_title").textContent=o.title||"عنوان";$("#pv_msg").textContent=o.message||"متن پیام";
     $("#pv_ok").textContent=o.okTxt||"عضویت";const no=$("#pv_no");no.textContent=o.dismissTxt||"رد";no.style.display=o.dismissable?"":"none";
   }
@@ -564,7 +590,8 @@
   function copy(t){try{navigator.clipboard.writeText(t).catch(()=>fb(t));}catch(e){fb(t);}}
   function fb(t){const a=document.createElement("textarea");a.value=t;a.style.position="fixed";a.style.opacity="0";document.body.appendChild(a);a.select();try{document.execCommand("copy");}catch(e){}document.body.removeChild(a);}
   $("#btnCopyTxt").addEventListener("click",()=>{copy(configJson());toast("JSON کپی شد");});
-  $("#copyLink").addEventListener("click",()=>{const u=rawUrl();if(u){copy(u);toast("لینک کپی شد");}});
+  $("#copyLink").addEventListener("click",()=>{const u=rawUrl();if(u){copy(u);toast("لینک گیت‌هاب کپی شد");}});
+  $("#copyLinkCf").addEventListener("click",()=>{const u=cfUrl();if(u){copy(u);toast("لینک بدون فیلتر کپی شد");}else toast("اول آدرس Worker را در تب «آمار» ذخیره کن");});
 
   async function putFile(path,jsonStr,sha){
     const api=`${GH}/repos/${CONN.owner}/${CONN.repo}/contents/${path.split("/").map(encodeURIComponent).join("/")}`;
@@ -741,7 +768,8 @@
   function ago(ms){if(!ms)return "—";const m=Math.floor((Date.now()-ms)/60000);
     if(m<1)return "همین الان";if(m<60)return fa(m)+" دقیقه پیش";const h=Math.floor(m/60);if(h<24)return fa(h)+" ساعت پیش";return fa(Math.floor(h/24))+" روز پیش";}
   async function cfetch(path,opt){
-    return fetch(CNT.url+path,{...(opt||{}),headers:{Authorization:"Bearer "+CNT.key},cache:"no-store"});
+    const base=(CNT.url||"").replace(/\/+$/,"");
+    return fetch(base+path,{...(opt||{}),headers:{Authorization:"Bearer "+CNT.key},cache:"no-store"});
   }
   let statsData=null;            // last /stats payload
   let statsWin="total";          // which window drives per-app numbers
@@ -769,7 +797,7 @@
       if(!r.ok){box.innerHTML='<div class="empty">خطا ('+r.status+')</div>';return;}
       const j=await r.json();box.dataset.loaded="1";statsData=j;
       renderKpis();renderStatsList();
-    }catch(e){box.innerHTML='<div class="empty">ارتباط با Worker برقرار نشد.</div>';}
+    }catch(e){box.innerHTML='<div class="empty">ارتباط با Worker برقرار نشد.<br><span style="font-size:.9em;color:var(--muted)">'+esc(e&&e.message||e)+'</span><br><span style="font-size:.85em;color:var(--muted)">آدرس Worker را در بخش پایین بررسی کن (بدون / در آخر).</span></div>';logEvent("err","آمار: "+(e&&e.message||e));}
   }
   function renderStatsList(){
     const box=$("#statsList");if(!statsData)return;
@@ -862,6 +890,30 @@
     if(te)te.textContent=new Intl.DateTimeFormat("fa-IR",{timeZone:"Asia/Tehran",hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:false}).format(d);
   }catch(e){}}
   tickClock();setInterval(tickClock,1000);
+
+  /* FILTER CHECKER — does a URL actually open from this device, with the current connection? */
+  function fcNote(t,m){const n=$("#fcNote");n.className="status-note show "+t;n.innerHTML=m;}
+  async function checkUrl(url){
+    if(!/^https?:\/\//i.test(url))return {ok:false,ms:0,err:"لینک باید با https:// شروع شود"};
+    const ctrl=new AbortController();const to=setTimeout(()=>ctrl.abort(),9000);const t0=Date.now();
+    try{await fetch(url,{mode:"no-cors",cache:"no-store",signal:ctrl.signal});clearTimeout(to);return {ok:true,ms:Date.now()-t0};}
+    catch(e){clearTimeout(to);const aborted=ctrl.signal.aborted;return {ok:false,ms:Date.now()-t0,err:aborted?"زمان تمام شد — باز نشد (احتمالاً فیلتر است)":"باز نشد / در دسترس نیست (احتمالاً فیلتر است)"};}
+  }
+  async function runCheck(url,label){
+    url=(url||"").trim();
+    if(!url){fcNote("err","لینکی برای تست نیست"+(label?" ("+label+")":"")+".");return;}
+    fcNote("info",'<span class="spin"></span> در حال بررسی'+(label?" "+label:"")+"…");
+    const r=await checkUrl(url);
+    if(r.ok)fcNote("ok","✓ باز شد"+(label?" — "+label:"")+" · "+fa(r.ms)+" میلی‌ثانیه");
+    else fcNote("err","✗ "+r.err+(label?" — "+label:""));
+  }
+  $("#m_filter").addEventListener("click",()=>{closeD();$("#fcNote").className="status-note";$("#fcModal").hidden=false;});
+  $("#fcClose").addEventListener("click",()=>{$("#fcModal").hidden=true;});
+  $("#fcModal").addEventListener("click",e=>{if(e.target.id==="fcModal")$("#fcModal").hidden=true;});
+  $("#fcCheck").addEventListener("click",()=>runCheck($("#fc_url").value,""));
+  $("#fc_url").addEventListener("keydown",e=>{if(e.key==="Enter")runCheck($("#fc_url").value,"");});
+  $("#fcRaw").addEventListener("click",()=>runCheck(rawUrl(),"لینک گیت‌هاب"));
+  $("#fcCf").addEventListener("click",()=>runCheck(cfUrl(),"لینک بدون فیلتر"));
 
   /* migrate existing secrets off localStorage into SecureStore (safe: verified, non-destructive on failure) */
   try{if(CONN&&CONN.token)secSet(LS_SET,JSON.stringify(CONN));}catch(e){}

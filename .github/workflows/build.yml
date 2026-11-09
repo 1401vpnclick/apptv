@@ -51,6 +51,18 @@ jobs:
           path: out/*.apk
           if-no-files-found: error
 
+      - name: Read version for release
+        id: ver
+        run: . ./version.properties && echo "name=$VERSION_NAME" >> "$GITHUB_OUTPUT"
+
+      - name: Publish Release with APK
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.ver.outputs.name }}
+          name: مدیریت گیت v${{ steps.ver.outputs.name }}
+          files: out/*.apk
+
       - name: Bump version for next build
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
